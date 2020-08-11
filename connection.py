@@ -1,5 +1,5 @@
 """
-[Connect to the SportMonks API]
+Connect to the SportMonks API.
  """
 import os
 import logging
@@ -20,64 +20,6 @@ API_CODE = os.environ.get("SportMonks_API_KEY")
 API_URL = "https://soccer.sportmonks.com/api/v2.0/"
 TIMEZONE = "GMT+1"
 
-def unnest_includes(dictionary: dict):
-    """
-    ***FROM https://github.com/Dmitrii-I/sportmonks/blob/master/sportmonks/_base.py
-    Function to tidy up the response when includes and nested includes are used. The response
-    from the API is like the below, nested dictionaries:
-    {######,
-        "season": {
-            "data": {
-                "id": 16216,
-                "name": "2019/2020",
-                "league_id": 27,
-                "is_current_season": true,
-                "current_round_id": null,
-                "current_stage_id": 77444688
-            }
-        }
-    }
-
-    Prefer the following:
-
-    {######,
-        "season": {
-                "id": 16216,
-                "name": "2019/2020",
-                "league_id": 27,
-                "is_current_season": true,
-                "current_round_id": null,
-                "current_stage_id": 77444688
-            }
-
-    }
-
-    Args:
-        dictionary:
-            The JSON response fromm SportMonks GET request.
-
-    Returns:
-        Unnested dictionary.
-    """
-
-    unnested = dict()
-
-    for key in dictionary:
-        if isinstance(dictionary[key], dict) and list(dictionary[key].keys()) == ["data"]:
-            data = dictionary[key]["data"]
-
-            if isinstance(data, list):
-                for i, v in enumerate(data):
-                    if isinstance(v, dict):
-                        data[i] = unnest_includes(v)
-            elif isinstance(data, dict):
-                data = unnest_includes(data)
-
-            unnested[key] = data
-        else:
-            unnested[key] = dictionary[key]
-
-    return unnested
 
 def get_data(endpoint: str, includes: str = None, params: dict = None):
     """
@@ -161,9 +103,9 @@ def get_data(endpoint: str, includes: str = None, params: dict = None):
             log.info("Response is %s", response)
 
     if isinstance(response, dict):
-        response = unnest_includes(response)
+        response = helper.unnest_includes(response)
     elif isinstance(response, list):
-        response = [unnest_includes(d) for d in response]
+        response = [helper.unnest_includes(d) for d in response]
     else:
         raise TypeError(f"Can't unnest an object of type: {type(response)}")
 

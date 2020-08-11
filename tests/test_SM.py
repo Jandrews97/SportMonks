@@ -1,8 +1,8 @@
 """Test the SM API wrapper"""
 
 import pytest
-import sportmonks
-import connection
+import helper
+import sportmonks as sm
 
 @pytest.fixture
 def _continent_keys():
@@ -13,7 +13,7 @@ def _continent_keys():
 def test_continent_keys(_continent_keys):
     """Tests the API call to get continent info"""
 
-    response = sportmonks.get_continents(includes="countries")
+    response = sm.get_continents(includes="countries")
     assert isinstance(response, list), "not a list"
     n = len(response)
     for i in response:
@@ -28,4 +28,4 @@ def test_unnest():
     """
     Test the unnesting function
     """
-    assert connection.unnest_includes({"hi": {"data": [1, 2]}}) == {"hi" : [1, 2]}
+    assert helper.unnest_includes({"hi": {"data": [1, 2]}}) == {"hi" : [1, 2]}
