@@ -17,3 +17,6 @@ class TooManyRequests(Exception):
 
 class ServerErrors(Exception):
     """Status codes: 500, 502, 503, 504"""
+
+class APIKeyMissing(Exception):
+    """Raises when API key is missing"""
