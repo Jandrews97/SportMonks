@@ -56,11 +56,12 @@ def get_data(endpoint: str, includes: str = None, params: dict = None):
     log.info("Paramaters to filter/query by: %s", params)
 
     r = requests.get(API_URL + endpoint, params=payload)
+    log.info("requets.get: %s", r)
     log.debug("Made request, status code: %s", r.status_code)
     log.info("URL: %s", r.url)
 
     response = r.json()
-    log.info("Response JSON: %s", type(response))
+    log.info("Response JSON: %s", response)
 
     if "error" in response:
         error_message = response["error"]["message"]

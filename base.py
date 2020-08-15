@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 import time
 from typing import Dict, Optional, Union, List, Any
-import json
+import pandas as pd
 import requests
 import pytz
 from errors import (
@@ -51,11 +51,16 @@ class API(object):
     @property
     def headers(self):
         """Headers"""
-        return {"Content-Type": "application/json",
-                "Accept": "application/json",
-                "Accept-Encoding": "deflate, gzip",
-                "Date": f"{datetime.now(pytz.timezone(self.tz))}"}
-
+        if self.tz:
+            return {"Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Accept-Encoding": "deflate, gzip",
+                    "Date": f"{datetime.now(pytz.timezone(self.tz))}"}
+        else:
+            return {"Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Accept-Encoding": "deflate, gzip",
+                    "Date": f"{datetime.now()}"}
 
     def unnest_includes(self, dictionary: dict):
         """
@@ -115,9 +120,9 @@ class API(object):
         Excludes paramaters which are passed in to request.get().
         """
         if isinstance(endpoint, str):
-            return self.url + "/" + endpoint
+            return self.url + endpoint
         elif isinstance(endpoint, list):
-            return self.url + "/" + "/".join(endpoint)
+            return self.url + "/".join(endpoint)
         else:
             raise TypeError(f"Did not expect endpoint of type: {type(endpoint)}")
 
@@ -137,16 +142,23 @@ class API(object):
         """Make a GET reqeust to SportMonks API"""
 
         if params:
-            payload = self.initial_params.update(params)
+            params.update(self.initial_params)
+        else:
+            params = self.initial_params
 
         if includes:
             includes = self.process_includes(includes)
-            payload["include"] = includes
+            params["include"] = includes
+
+        if "page" not in params:
+            params["page"] = 1
 
         url = self.create_api_url(endpoint=endpoint)
+
         try:
-            r = requests.get(url, params=payload, headers=self.headers,
+            r = requests.get(url, params=params, headers=self.headers,
                              timeout=self.timeout)
+            log.info("URL: %s", r.url)
         except requests.exceptions.Timeout as e:
             log.info("Response has timed out: %s", e)
             raise SystemExit(e)
@@ -154,10 +166,9 @@ class API(object):
 
         try:
             response = r.json()
-        except json.decoder.JSONDecodeError as e:
+        except ValueError as e:
             log.info("Could not decode response in to JSON: %s", e)
             raise SystemExit(e)
-
 
         if "error" in response:
             error_message = response["error"].get("message")
@@ -176,3 +187,29 @@ class API(object):
                                       {error_message}")
             elif r.status_code in [500, 502, 503, 504]:
                 raise ServerErrors(f"Server errors, reason: {error_message}")
+
+        data = response.get("data")
+        if not data:
+            log.error("No data was included!")
+            return None
+
+        if "pagination" in response.get("meta"):
+            total_pages = response["meta"]["pagination"].get("total_pages")
+            log.info("Response is paginated; %s pages", total_pages)
+            for page in range(2, total_pages + 1):
+                params["page"] = page
+                r = requests.get(url, params=params, headers=self.headers,
+                                 timeout=self.timeout)
+                log.info("URL: %s", r.url)
+                next_page_data = r.json().get("data")
+                if next_page_data:
+                    data += next_page_data
+
+        if isinstance(data, dict):
+            data = self.unnest_includes(data)
+        elif isinstance(data, list):
+            data = [self.unnest_includes(d) for d in data]
+        else:
+            raise TypeError(f"Did not expect response of type: {type(data)}")
+
+        return data
