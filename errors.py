@@ -20,3 +20,6 @@ class ServerErrors(Exception):
 
 class APIKeyMissing(Exception):
     """Raises when API key is missing"""
+
+class IncompatibleArgs(Exception):
+    """Raises when incompatible optional paramaters are passed."""

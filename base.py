@@ -23,7 +23,7 @@ import helper
 
 log = helper.setup_logger(__name__, "SM_API.log")
 
-class API(object):
+class BaseAPI(object):
     """Base API for SportMonks"""
 
     def __init__(self, api_key: str = None, timeout: int = 2,
@@ -32,10 +32,20 @@ class API(object):
         self.url = "https://soccer.sportmonks.com/api/v2.0/"
         self.api_key = api_key
         self.timeout = timeout
-        self.tz = tz
+
+        if tz:
+            self.tz = tz
+        else:
+            self.tz = datetime.now().astimezone().tzinfo
+
         self.get_key()
         self.initial_params = {"api_token": self.api_key, "tz": self.tz}
         self.meta_info()
+
+        if tz:
+            self.tz = tz
+        else:
+            self.tz = datetime.now().astimezone().tzinfo
 
     def get_key(self):
         """
@@ -47,7 +57,23 @@ class API(object):
             if os.environ.get("SPORTMONKS_KEY"):
                 self.api_key = os.environ.get("SPORTMONKS_KEY")
             else:
-                raise APIKeyMissing("API key is missing")
+                raise APIKeyMissing("Make an environment variable named 'SPORTMONKS_KEY' \
+                                    to store your api key")
+
+    def meta_info(self):
+        """Returns meta info from your SportMonks plan."""
+
+        r = requests.get(self.create_api_url(endpoint="continents"),
+                         params=self.initial_params).json()
+        plan = r.get("meta").get("plan")
+
+        if plan:
+            self.plan_name = plan.get("name")
+            self.plan_price = "\u20ac" + plan.get("price")
+            limit, mins = plan.get("request_limit").split(",")
+            self.request_limit = f"{limit} requests per {mins} minutes."
+
+        return None
 
     @property
     def headers(self):
@@ -115,17 +141,21 @@ class API(object):
 
         return unnested
 
-    def create_api_url(self, endpoint: Union[str, List[str]]):
+    def create_api_url(self, endpoint: Union[str, int, List[str, int]]):
         """
         Creates API URL for different endpoints.
         Excludes paramaters which are passed in to request.get().
         """
+        endpoint = [endpoint] if isinstance(endpoint, (str, int)) else endpoint
+
+        return self.url + "/".join(list(map(str, endpoint)))
+        """
         if isinstance(endpoint, str):
             return self.url + endpoint
         elif isinstance(endpoint, list):
-            return self.url + "/".join(endpoint)
+            return self.url + "/".join(list(map(str, endpoint)))
         else:
-            raise TypeError(f"Did not expect endpoint of type: {type(endpoint)}")
+            raise TypeError(f"Did not expect endpoint of type: {type(endpoint)}")"""
 
     @staticmethod
     def process_includes(includes: Union[str, List[str]]):
@@ -136,6 +166,17 @@ class API(object):
         includes = [includes] if isinstance(includes, str) else includes
         return ",".join(includes)
 
+    @staticmethod
+    def process_params(params: dict):
+        """
+        Processes the paramaters ready to be put in to the query string.
+        """
+        for key in params.keys():
+            if isinstance(params[key], list):
+                params[key] = ",".join(list(map(str, params[key])))
+
+        return params
+
     def make_request(self, endpoint: Union[str, List[str]],
                      includes: Optional[List[str]] = None,
                      params: Optional[dict] = None):
@@ -143,6 +184,7 @@ class API(object):
         """Make a GET reqeust to SportMonks API"""
 
         if params:
+            params = self.process_params(params)
             params.update(self.initial_params)
         else:
             params = self.initial_params
@@ -215,21 +257,3 @@ class API(object):
             raise TypeError(f"Did not expect response of type: {type(data)}")
 
         return data
-
-    def meta_info(self):
-        """Returns meta info from your SportMonks plan."""
-
-        r = requests.get(self.create_api_url(endpoint="continents"),
-                         params=self.initial_params).json()
-        meta = r.get("meta").get("plan")
-
-        if meta:
-            self.plan_name = meta.get("name")
-            self.plan_price = "\u20ac" + meta.get("price")
-            limit, mins = meta.get("request_limit").split(",")
-            self.request_limit = f"{limit} requests per {mins} minutes."
-
-
-sm = API(os.environ.get("SportMonks_API_KEY"))
-
-print(sm.request_limit)
