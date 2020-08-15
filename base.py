@@ -35,6 +35,7 @@ class API(object):
         self.tz = tz
         self.get_key()
         self.initial_params = {"api_token": self.api_key, "tz": self.tz}
+        self.meta_info()
 
     def get_key(self):
         """
@@ -166,6 +167,7 @@ class API(object):
 
         try:
             response = r.json()
+            log.info("response: %s", response)
         except ValueError as e:
             log.info("Could not decode response in to JSON: %s", e)
             raise SystemExit(e)
@@ -213,3 +215,21 @@ class API(object):
             raise TypeError(f"Did not expect response of type: {type(data)}")
 
         return data
+
+    def meta_info(self):
+        """Returns meta info from your SportMonks plan."""
+
+        r = requests.get(self.create_api_url(endpoint="continents"),
+                         params=self.initial_params).json()
+        meta = r.get("meta").get("plan")
+
+        if meta:
+            self.plan_name = meta.get("name")
+            self.plan_price = "\u20ac" + meta.get("price")
+            limit, mins = meta.get("request_limit").split(",")
+            self.request_limit = f"{limit} requests per {mins} minutes."
+
+
+sm = API(os.environ.get("SportMonks_API_KEY"))
+
+print(sm.request_limit)

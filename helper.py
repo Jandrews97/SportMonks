@@ -10,7 +10,7 @@ def unnest_includes(dictionary: dict):
     ***FROM https://github.com/Dmitrii-I/sportmonks/blob/master/sportmonks/_base.py
     Function to tidy up the response when includes and nested includes are used. The response
     from the API is like the below, nested dictionaries:
-    {######,
+    {...,
         "season": {
             "data": {
                 "id": 16216,
@@ -25,7 +25,7 @@ def unnest_includes(dictionary: dict):
 
     Prefer the following:
 
-    {######,
+    {...,
         "season": {
                 "id": 16216,
                 "name": "2019/2020",
