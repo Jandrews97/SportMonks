@@ -183,6 +183,8 @@ class BaseAPI(object):
         if "page" not in params:
             params["page"] = 1
 
+        log.info("Params: %s", params)
+
         url = self.create_api_url(endpoint=endpoint)
 
         try:

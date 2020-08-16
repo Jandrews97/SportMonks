@@ -505,6 +505,7 @@ class SportMonks(BaseAPI):
 
         """
         params = {"markets": markets, "bookmakers": bookmakers}
+        log.info("Params in fixtures: %s", params)
 
         if isinstance(fixture_ids, list):
             fixture_ids = ",".join(list(map(str, fixture_ids)))
@@ -882,11 +883,10 @@ class SportMonks(BaseAPI):
 
         for key in response:
             if isinstance(response[key], list):
+                log.debug("This key has a list value: %s", key)
                 return False
             elif isinstance(response[key], dict):
                 cls.__is_normalizable(response[key])
-            else:
-                raise TypeError(f"Did not expect a key of that type: {type(response[key])}")
 
         return True
 
@@ -931,7 +931,7 @@ class SportMonks(BaseAPI):
         league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
         """
 
-        response = self.fixtures(fixture_ids, includes)
+        response = self.fixtures(fixture_ids=fixture_ids, includes=includes)
 
         if "stats" in includes:
             response = self.__stats_includes(response)
@@ -943,15 +943,23 @@ class SportMonks(BaseAPI):
             if not all(self.__is_normalizable(fixt) for fixt in response):
                 raise NotJSONNormalizable("Response is not JSON-normalizable.")
 
+        df = pd.json_normalize(response)
+
         if cols:
             try:
-                df = pd.json_normalize(response)[cols]
+                df = df[cols]
             except KeyError as e:
                 log.info("No key, value pair for column: %s", e)
                 missing_keys = set(cols).difference(df.columns)
+                log.info("Missing keys: %s", missing_keys)
                 for key in missing_keys:
                     df[key] = np.NaN
                 df = df[cols]
-                return df
-        else:
-            return pd.json_normalize(response)
+
+        return df
+
+sm = SportMonks(KEY)
+df_data = sm.fixture_stats(fixture_ids=[300548, 300550], includes="visitorTeam,stats",
+                           cols=["id", "season_id"])
+
+print(df_data)
