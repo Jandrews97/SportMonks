@@ -78,18 +78,12 @@ class BaseAPI(object):
     @property
     def headers(self):
         """Headers"""
-        if self.tz:
-            return {"Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "Accept-Encoding": "deflate, gzip",
-                    "Date": f"{datetime.now(pytz.timezone(self.tz))}"}
-        else:
-            return {"Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "Accept-Encoding": "deflate, gzip",
-                    "Date": f"{datetime.now()}"}
+        return {"Content-Type": "application/json",
+                "Accept": "application/json",
+                "Accept-Encoding": "deflate, gzip",
+                "Date": f"{datetime.now()}"}
 
-    def unnest_includes(self, dictionary: dict):
+    def __unnest_includes(self, dictionary: dict):
         """
             Changes the SportMonks API response to get rid of the
             superfluous "data" that is included inside an includes
@@ -130,9 +124,9 @@ class BaseAPI(object):
                 if isinstance(data, list):
                     for i, v in enumerate(data):
                         if isinstance(v, dict):
-                            data[i] = self.unnest_includes(v)
+                            data[i] = self.__unnest_includes(v)
                 elif isinstance(data, dict):
-                    data = self.unnest_includes(data)
+                    data = self.__unnest_includes(data)
 
                 unnested[key] = data
 
@@ -141,7 +135,7 @@ class BaseAPI(object):
 
         return unnested
 
-    def create_api_url(self, endpoint: Union[str, int, List[str, int]]):
+    def create_api_url(self, endpoint: Union[str, int, List[Union[str, int]]]):
         """
         Creates API URL for different endpoints.
         Excludes paramaters which are passed in to request.get().
@@ -149,13 +143,6 @@ class BaseAPI(object):
         endpoint = [endpoint] if isinstance(endpoint, (str, int)) else endpoint
 
         return self.url + "/".join(list(map(str, endpoint)))
-        """
-        if isinstance(endpoint, str):
-            return self.url + endpoint
-        elif isinstance(endpoint, list):
-            return self.url + "/".join(list(map(str, endpoint)))
-        else:
-            raise TypeError(f"Did not expect endpoint of type: {type(endpoint)}")"""
 
     @staticmethod
     def process_includes(includes: Union[str, List[str]]):
@@ -250,9 +237,9 @@ class BaseAPI(object):
                     data += next_page_data
 
         if isinstance(data, dict):
-            data = self.unnest_includes(data)
+            data = self.__unnest_includes(data)
         elif isinstance(data, list):
-            data = [self.unnest_includes(d) for d in data]
+            data = [self.__unnest_includes(d) for d in data]
         else:
             raise TypeError(f"Did not expect response of type: {type(data)}")
 

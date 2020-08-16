@@ -3,16 +3,19 @@
 import os
 import logging
 from typing import Dict, Optional, Union, List, Any
+import numpy as np
+import pandas as pd
 from base import BaseAPI
 import helper
-from errors import IncompatibleArgs
+from errors import IncompatibleArgs, NotJSONNormalizable
 
 log = helper.setup_logger(__name__, "SM_API.log")
+KEY = os.environ.get("SportMonks_API_KEY")
 
 class SportMonks(BaseAPI):
     """SportMonks API"""
 
-    def __init__(self, api_key: str = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
         super().__init__(api_key, timeout)
 
     def continents(self, continent_id: Optional[int] = None,
@@ -271,7 +274,7 @@ class SportMonks(BaseAPI):
 
 
     def squads(self, season_id: int, team_id: int,
-               includes: Optional[str, List[str]] = None):
+               includes: Optional[Union[str, List[str]]] = None):
 
         """
         Since November 2017 we offer the ability to load historical Squads.
@@ -372,7 +375,7 @@ class SportMonks(BaseAPI):
 
     def rounds(self, round_id: Optional[int] = None,
                season_id: Optional[int] = None,
-               includes: Optional[str, List[str]] = None):
+               includes: Optional[Union[str, List[str]]] = None):
 
         """
         Leagues can be split up in Rounds representing a week a game is played in.
@@ -405,7 +408,7 @@ class SportMonks(BaseAPI):
 
     def stages(self, stage_id: Optional[int] = None,
                season_id: Optional[int] = None,
-               includes: Optional[str, List[str]] = None):
+               includes: Optional[Union[str, List[str]]] = None):
 
         """
         Leagues and Seasons all over the world can have a different set up.
@@ -438,7 +441,7 @@ class SportMonks(BaseAPI):
 
     def players(self, player_id: Optional[int] = None,
                 search: Optional[str] = None,
-                includes: Optional[str, List[str]] = None):
+                includes: Optional[Union[str, List[str]]] = None):
         """
         The Players endpoint provides you detailed Player information.
         With this endpoint you will be able to build a complete Player Profile.
@@ -472,7 +475,7 @@ class SportMonks(BaseAPI):
     def fixtures(self, fixture_ids: Union[int, List[int]],
                  markets: Optional[Union[int, List[int]]] = None,
                  bookmakers: Optional[Union[int, List[int]]] = None,
-                 includes: Optional[str, List[str]] = None):
+                 includes: Optional[Union[str, List[str]]] = None):
 
         """
         The Fixture endpoint provides information about Games in particular Leagues.
@@ -515,7 +518,7 @@ class SportMonks(BaseAPI):
     def fixtures_by_date(self, date: str, league_ids: Optional[Union[int, List[int]]] = None,
                          markets: Optional[Union[int, List[int]]] = None,
                          bookmakers: Optional[Union[int, List[int]]] = None,
-                         includes: Optional[str, List[str]] = None):
+                         includes: Optional[Union[str, List[str]]] = None):
 
         """
         Fixtures by date.
@@ -559,7 +562,7 @@ class SportMonks(BaseAPI):
                                league_ids: Optional[Union[int, List[int]]] = None,
                                markets: Optional[Union[int, List[int]]] = None,
                                bookmakers: Optional[Union[int, List[int]]] = None,
-                               includes: Optional[str, List[str]] = None):
+                               includes: Optional[Union[str, List[str]]] = None):
         """
         Fixtures between start_date and end_date.
 
@@ -609,7 +612,7 @@ class SportMonks(BaseAPI):
     def inplay_fixtures(self, markets: Optional[Union[int, List[int]]] = None,
                         bookmakers: Optional[Union[int, List[int]]] = None,
                         league_ids: Optional[Union[int, List[int]]] = None,
-                        includes: Optional[str, List[str]] = None):
+                        includes: Optional[Union[str, List[str]]] = None):
 
         """
         Games currently being played
@@ -647,7 +650,7 @@ class SportMonks(BaseAPI):
     def schedule_today(self, markets: Optional[Union[int, List[int]]] = None,
                        bookmakers: Optional[Union[int, List[int]]] = None,
                        league_ids: Optional[Union[int, List[int]]] = None,
-                       includes: Optional[str, List[str]] = None):
+                       includes: Optional[Union[str, List[str]]] = None):
 
         """
         Returns the schedule for the current day.
@@ -681,7 +684,7 @@ class SportMonks(BaseAPI):
 
 
     def head2head(self, team1_id: int, team2_id: int,
-                  includes: Optional[str, List[str]] = None):
+                  includes: Optional[Union[str, List[str]]] = None):
 
         """
         The Head 2 Head endpoint provides you all previous Games between 2 Teams
@@ -705,7 +708,7 @@ class SportMonks(BaseAPI):
         """
         return self.make_request(endpoint=["head2head", team1_id, team2_id], includes=includes)
 
-    def standings(self, season_id: int, includes: Optional[str, List[str]] = None,
+    def standings(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
                   group_ids: Optional[Union[int, List[int]]] = None,
                   stage_ids: Optional[Union[int, List[int]]] = None):
 
@@ -761,7 +764,7 @@ class SportMonks(BaseAPI):
         return self.make_request(endpoint=["standings", "season", season_id, "date", date])
 
     def topscorers(self, season_id: int, stage_ids: Optional[Union[int, List[int]]] = None,
-                   includes: Optional[str, List[str]] = None):
+                   includes: Optional[Union[str, List[str]]] = None):
 
         """
         The Topscorers endpoint provides you accurate information about the Topscorers in Goals,
@@ -794,7 +797,7 @@ class SportMonks(BaseAPI):
                                  includes=includes, params=params)
 
     def aggregated_topscorers(self, season_id: int,
-                              includes: Optional[str, List[str]] = None):
+                              includes: Optional[Union[str, List[str]]] = None):
 
         """
         This Topscorers endpoint returns the Aggregated Topscorers by Season.
@@ -868,3 +871,87 @@ class SportMonks(BaseAPI):
 
         """
         return self.make_request(endpoint=["odds", "inplay", "fixture", fixture_id])
+
+    @classmethod
+    def __is_normalizable(cls, response: dict):
+        """
+        Is the response JSON normalizable?
+        son_normalize only handels nested dictionaries,
+        if the values in the dicts are lists then they won't be unnested.
+        """
+
+        for key in response:
+            if isinstance(response[key], list):
+                return False
+            elif isinstance(response[key], dict):
+                cls.__is_normalizable(response[key])
+            else:
+                raise TypeError(f"Did not expect a key of that type: {type(response[key])}")
+
+        return True
+
+    @staticmethod
+    def __stats_includes(response: Union[dict, List[dict]]):
+        """Placeholder"""
+
+        if isinstance(response, list):
+            for fixt in response:
+                statistics = fixt.get("stats")
+                if len(statistics) == 2:
+                    fixt["home"] = statistics[0]
+                    fixt["away"] = statistics[1]
+                    del fixt["stats"]
+                else:
+                    log.info("Length of statistics: %s", len(statistics))
+                    fixt["home"] = {}
+                    fixt["away"] = {}
+                    del fixt["stats"]
+
+        elif isinstance(response, dict):
+            statistics = response.get("stats")
+            if len(statistics) == 2:
+                response["home"] = statistics[0]
+                response["away"] = statistics[1]
+                del response["stats"]
+            else:
+                log.info("Length of statistics: %s", len(statistics))
+                response["home"] = {}
+                response["away"] = {}
+                del response["stats"]
+
+        return response
+
+
+    def fixture_stats(self, fixture_ids: Union[int, List[int]],
+                      includes: Optional[Union[str, List[str]]] = None,
+                      cols: Optional[Union[str, List[str]]] = None):
+        """
+        Fixture statistics to a pandas DataFrame.
+        Recommended includes are:
+        league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
+        """
+
+        response = self.fixtures(fixture_ids, includes)
+
+        if "stats" in includes:
+            response = self.__stats_includes(response)
+
+        if isinstance(response, dict):
+            if not self.__is_normalizable(response):
+                raise NotJSONNormalizable("Response is not JSON-normalizable.")
+        elif isinstance(response, list):
+            if not all(self.__is_normalizable(fixt) for fixt in response):
+                raise NotJSONNormalizable("Response is not JSON-normalizable.")
+
+        if cols:
+            try:
+                df = pd.json_normalize(response)[cols]
+            except KeyError as e:
+                log.info("No key, value pair for column: %s", e)
+                missing_keys = set(cols).difference(df.columns)
+                for key in missing_keys:
+                    df[key] = np.NaN
+                df = df[cols]
+                return df
+        else:
+            return pd.json_normalize(response)

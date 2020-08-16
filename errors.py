@@ -23,3 +23,6 @@ class APIKeyMissing(Exception):
 
 class IncompatibleArgs(Exception):
     """Raises when incompatible optional paramaters are passed."""
+
+class NotJSONNormalizable(Exception):
+    """Raises an error when the response is not normalizable"""
