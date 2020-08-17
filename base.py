@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 import time
 from typing import Dict, Optional, Union, List, Any
+import numpy as np
 import pandas as pd
 import requests
 import pytz
@@ -17,7 +18,8 @@ from errors import (
     APINotFound,
     TooManyRequests,
     ServerErrors,
-    APIKeyMissing
+    APIKeyMissing,
+    NotJSONNormalizable
 )
 import helper
 
@@ -246,3 +248,48 @@ class BaseAPI(object):
             raise TypeError(f"Did not expect response of type: {type(data)}")
 
         return data
+
+    @classmethod
+    def __is_normalizable(cls, response: dict):
+        """
+        Is the response JSON normalizable?
+        json_normalize only handels nested dictionaries,
+        if the values in the dicts are lists then they won't be unnested.
+        """
+
+        for key in response:
+            if isinstance(response[key], list):
+                log.debug("This key has a list value: %s", key)
+                return False
+            elif isinstance(response[key], dict):
+                cls.__is_normalizable(response[key])
+
+        return True
+
+
+    def _to_df(self, response: Union[dict, List[dict]],
+               cols: Optional[Union[str, List[str]]] = None):
+
+        """Transforms JSON API reponse to a pandas DataFrame"""
+
+        if isinstance(response, dict):
+            if not self.__is_normalizable(response):
+                raise NotJSONNormalizable("Response is not JSON-normalizable.")
+        elif isinstance(response, list):
+            if not all(self.__is_normalizable(fixt) for fixt in response):
+                raise NotJSONNormalizable("Response is not JSON-normalizable.")
+
+        df = pd.json_normalize(response)
+
+        if cols:
+            try:
+                df = df[cols]
+            except KeyError as e:
+                log.info("No key, value pair for column: %s", e)
+                missing_keys = set(cols).difference(df.columns)
+                log.info("Missing keys: %s", missing_keys)
+                for key in missing_keys:
+                    df[key] = np.NaN
+                df = df[cols]
+
+        return df

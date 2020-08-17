@@ -12,24 +12,27 @@ from errors import IncompatibleArgs, NotJSONNormalizable
 log = helper.setup_logger(__name__, "SM_API.log")
 KEY = os.environ.get("SportMonks_API_KEY")
 
-class SportMonks(BaseAPI):
-    """SportMonks API"""
+class Continents(BaseAPI):
+    """Continents Class."""
 
     def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
         super().__init__(api_key, timeout)
 
     def continents(self, continent_id: Optional[int] = None,
-                   includes: Optional[Union[str, List[str]]] = None):
+                   includes: Optional[Union[str, List[str]]] = None,
+                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
-        The Continents endpoint helps you with assigning Countries and Leagues
+        The leagues endpoint helps you with assigning Countries and Leagues
         to the part of the world (Continent) they belong to.
-        Available Continents are Europe, Asia, Africa, Oceania,
+        Available leagues are Europe, Asia, Africa, Oceania,
         North America and South America.
 
         Args:
             continent_id:
                 id of the continent you want to retrieve.
-                If no continent_id is specified, all continents will be returned.
+                If no continent_id is specified, all leagues will be returned.
+            df:
+                if you want it in a Pandas DataFrame (if possible).
             includes:
                 Possible includes: countries.
                 ***See Sportmonks.com for information regarding includes.
@@ -40,17 +43,42 @@ class SportMonks(BaseAPI):
 
         """
 
+
         if continent_id:
             log.info("Get continent by id: %s, with includes = %s", continent_id, includes)
-            return self.make_request(endpoint=["continents", continent_id], includes=includes)
+            continents = self.make_request(endpoint=["continents", continent_id], includes=includes)
+            if df:
+                try:
+                    df_continents = self._to_df(continents, cols=df_cols)
+                    return df_continents
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON instead.")
+                    return continents
+            else:
+                return continents
         else:
             log.info("Get all continents")
             continents = self.make_request(endpoint="continents", includes=includes)
-            log.info("Returned %s continents with includes = %s", len(continents), includes)
-            return continents
+            if df:
+                try:
+                    continents = self._to_df(continents, cols=df_cols)
+                    return continents
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON instead.")
+                    return continents
+            else:
+                return continents
+            log.info("Returned %s leagues with includes = %s", len(continents), includes)
+
+class Countries(BaseAPI):
+    """Countries Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
 
     def countries(self, country_id: Optional[int] = None,
-                  includes: Optional[Union[str, List[str]]] = None):
+                  includes: Optional[Union[str, List[str]]] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Countries endpoint provides you Country information
@@ -73,15 +101,38 @@ class SportMonks(BaseAPI):
         """
         if country_id:
             log.info("Returning country by id: %s, with includes = %s", country_id, includes)
-            return self.make_request(endpoint=["countries", country_id], includes=includes)
+            countries = self.make_request(endpoint=["countries", country_id], includes=includes)
+            if df:
+                try:
+                    df_countries = self._to_df(countries, cols=df_cols)
+                    return df_countries
+                except NotJSONNormalizable:
+                    log.info("Not JSON-noralizable, returning JSON instead.")
+                    return countries
+            else:
+                return countries
         else:
             log.info("Returning all countries")
             countries = self.make_request(endpoint="countries", includes=includes)
-            log.info("Returned %s countries with includes = %s", len(countries), includes)
-            return countries
+            if df:
+                try:
+                    df_countries = self._to_df(countries, cols=df_cols)
+                    return df_countries
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON instead.")
+                    return countries
+            else:
+                return countries
 
-    def leagues(self, league_id: Optional[int] = None, search: Optional[str] = None,
-                includes: Optional[Union[str, List[str]]] = None):
+class Leagues(BaseAPI):
+    """Leagues Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def by_id(self, league_id: Optional[int] = None,
+              includes: Optional[Union[str, List[str]]] = None,
+              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         A request on this endpoint would return a response with all Leagues you have access to,
@@ -93,8 +144,6 @@ class SportMonks(BaseAPI):
             league_id:
                 id of the league you want to retrieve.
                 If no league_id is specified, all leagues in your plan will be returned.
-            search:
-                Search for a league by name.
             includes:
                 Possible includes: country, season, seasons.
                 ***See Sportmonks.com for information regarding includes.
@@ -106,18 +155,73 @@ class SportMonks(BaseAPI):
         """
         if league_id:
             log.info("Return a league by id: %s, with includes = %s", league_id, includes)
-            return self.make_request(endpoint=["leagues", league_id], includes=includes)
-        elif search:
-            log.info("Returning a league by search: %s", search)
-            return self.make_request(endpoint=["leagues", "search", search], includes=includes)
+            leagues = self.make_request(endpoint=["leagues", league_id], includes=includes)
+            if df:
+                try:
+                    df_leagues = self._to_df(leagues, cols=df_cols)
+                    return df_leagues
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable; returning JSON instead.")
+                    return leagues
+            else:
+                return leagues
         else:
             log.info("Returning all leagues")
             leagues = self.make_request(endpoint="leagues", includes=includes)
-            log.info("Returned %s leagues with includes = %s", len(leagues), includes)
+            if df:
+                try:
+                    df_leagues = self._to_df(leagues, cols=df_cols)
+                    return df_leagues
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable; returning JSON instead.")
+                    return leagues
+            else:
+                return leagues
+
+
+    def by_name(self, search: str, includes: Optional[Union[str, List[str]]] = None,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+
+        """
+        A request on this endpoint would return a response with all Leagues you have access to,
+        based on the plan you are subscribed to. The Leagues endpoint provides you
+        League information like its ID, Name, Country, Coverage etc.
+        If no league id is specified, all leagues in your plan will be returned
+
+        Args:
+            name:
+                name of the league
+            includes:
+                Possible includes: country, season, seasons.
+                ***See Sportmonks.com for information regarding includes.
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+
+        """
+        log.info("Returning a league by search: %s", search)
+        leagues = self.make_request(endpoint=["leagues", "search", search], includes=includes)
+        if df:
+            try:
+                df_leagues = self._to_df(leagues, cols=df_cols)
+                return df_leagues
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable; returning JSON.")
+                return leagues
+        else:
             return leagues
 
+class Seasons(BaseAPI):
+    """Seasons API"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+
     def seasons(self, season_id: Optional[int] = None,
-                includes: Optional[Union[str, List[str]]] = None):
+                includes: Optional[Union[str, List[str]]] = None,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Responses of the Seasons endpoint are limited to Seasons of the Leagues available in the
         Plan you are subscribed to.
@@ -149,14 +253,38 @@ class SportMonks(BaseAPI):
 
         if season_id:
             log.info("Returning season by id: %s, with includes = %s", season_id, includes)
-            return self.make_request(endpoint=["seasons", season_id], includes=includes)
+            seasons = self.make_request(endpoint=["seasons", season_id], includes=includes)
+            if df:
+                try:
+                    df_seasons = self._to_df(seasons, cols=df_cols)
+                    return df_seasons
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable; returning JSON instead.")
+                    return seasons
+            else:
+                return seasons
         else:
             log.info("Returning all seasons")
             seasons = self.make_request(endpoint="seasons", includes=includes)
-            log.info("Returned %s seasons, with includes = %s", len(seasons), includes)
-            return seasons
+            if df:
+                try:
+                    df_seasons = self._to_df(seasons, cols=df_cols)
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable; returning JSON instead.")
+                    return seasons
+            else:
+                return seasons
 
-    def bookmakers(self, bookmaker_id: Optional[int] = None):
+
+class Bookmakers(BaseAPI):
+    """Bookmakers Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+
+    def bookmakers(self, bookmaker_id: Optional[int] = None,
+                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Return a bookmaker by id.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -173,12 +301,38 @@ class SportMonks(BaseAPI):
         """
         if bookmaker_id:
             log.info("Returning bookmaker by id: %s", bookmaker_id)
-            return self.make_request(endpoint=["bookmakers", bookmaker_id])
+            bookmakers = self.make_request(endpoint=["bookmakers", bookmaker_id])
+            if df:
+                try:
+                    df_bookmakers = self._to_df(bookmakers, cols=df_cols)
+                    return df_bookmakers
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return bookmakers
+            else:
+                return bookmakers
+
         else:
             log.info("Returning all bookmakers")
-            return self.make_request(endpoint="bookmakers")
+            bookmakers = self.make_request(endpoint="bookmakers")
+            if df:
+                try:
+                    df_bookmakers = self._to_df(bookmakers, cols=df_cols)
+                    return df_bookmakers
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return bookmakers
+            else:
+                return bookmakers
 
-    def markets(self, market_id: Optional[int] = None):
+class Markets(BaseAPI):
+    """Markets Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def markets(self, market_id: Optional[int] = None,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Markets represent the betting options available per bookmaker.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -196,14 +350,37 @@ class SportMonks(BaseAPI):
 
         if market_id:
             log.info("Returning market: %s", market_id)
-            return self.make_request(endpoint=["markets", market_id])
+            markets = self.make_request(endpoint=["markets", market_id])
+            if df:
+                try:
+                    df_markets = self._to_df(markets, cols=df_cols)
+                    return df_markets
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON")
+                    return markets
+            else:
+                return markets
         else:
             markets = self.make_request(endpoint="markets")
             log.info("Returning all markets; %s markets", len(markets))
-            return markets
+            if df:
+                try:
+                    df_markets = self._to_df(markets, cols=df_cols)
+                    return df_markets
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON")
+                    return markets
+            else:
+                return markets
 
-    def teams(self, team_id: Optional[int] = None, season_id: Optional[int] = None,
-              includes: Optional[Union[str, List[str]]] = None):
+class Teams(BaseAPI):
+    """Teams Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def by_id(self, team_id: int, includes: Optional[Union[str, List[str]]] = None,
+              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         With the Teams endpoint you can find all Team Details you need.
@@ -213,9 +390,7 @@ class SportMonks(BaseAPI):
         Args:
             team_id:
                 id of the team you want to return.
-            season_id:
-                id of the season you want to return.
-            includes: optional
+            includes:
                 Possible includes: country, squad, coach, transfers, sidelined,
                 stats, venue, fifaranking,uefaranking, visitorFixtures, localFixtures,
                 visitorResults, latest, upcoming, goalscorers,
@@ -226,20 +401,55 @@ class SportMonks(BaseAPI):
         Returns:
             Parsed HTTP response from SportMonks API.
             JSON format.
-    """
-
-        if team_id and season_id:
-            raise IncompatibleArgs("Can only supply one of: team_id, season_id.")
-
-        if team_id:
-            return self.make_request(endpoint=["teams", team_id], includes=includes)
-        elif season_id:
-            return self.make_request(endpoint=["teams", "season", season_id], includes=includes)
+        """
+        team = self.make_request(endpoint=["teams", team_id], includes=includes)
+        if df:
+            try:
+                df_team = self._to_df(team, cols=df_cols)
+                return df_team
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return team
         else:
-            # check what happens when nothing is supplied
-            pass
+            return team
 
-    def team_current_leagues(self, team_id: int):
+
+    def by_season_id(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
+                     df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+        """
+        With the Teams endpoint you can find all Team Details you need.
+        You can think of information about when the Team is founded, Logo, Team Name,
+        Short Name etc.
+
+        Args:
+            season:
+                id of the season you want to return.
+            includes:
+                Possible includes: country, squad, coach, transfers, sidelined,
+                stats, venue, fifaranking,uefaranking, visitorFixtures, localFixtures,
+                visitorResults, latest, upcoming, goalscorers,
+                cardscorers, assistscorers, aggregatedGoalscorers, aggregatedCardscorers,
+                aggregatedAssistscorers, league, activeSeasons, trophies.
+                ***See Sportmonks.com for information regarding includes.
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+        """
+
+        teams = self.make_request(endpoint=["teams", "season", season_id], includes=includes)
+        if df:
+            try:
+                df_teams = self._to_df(teams, cols=df_cols)
+                return df_teams
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return teams
+        else:
+            return teams
+
+    def team_current_leagues(self, team_id: int, df: bool = False,
+                             df_cols: Optional[Union[str, List[str]]] = None):
         """
         Return all current leagues for a given team.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -253,9 +463,20 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
-        return self.make_request(endpoint=["teams", team_id, "current"])
+        current_leagues = self.make_request(endpoint=["teams", team_id, "current"])
+        if df:
+            try:
+                df_current_leagues = self._to_df(current_leagues, cols=df_cols)
+                return df_current_leagues
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return current_leagues
+        else:
+            return current_leagues
 
-    def team_historic_leagues(self, team_id):
+
+    def team_historic_leagues(self, team_id, df: bool = False,
+                              df_cols: Optional[Union[str, List[str]]] = None):
         """
         Return all historic leagues for a given team.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -269,12 +490,20 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
-
-        return self.make_request(endpoint=["teams", team_id, "history"])
-
+        historic_leagues = self.make_request(endpoint=["teams", team_id, "history"])
+        if df:
+            try:
+                df_historic_leagues = self._to_df(historic_leagues, cols=df_cols)
+                return df_historic_leagues
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return historic_leagues
+        else:
+            return historic_leagues
 
     def squads(self, season_id: int, team_id: int,
-               includes: Optional[Union[str, List[str]]] = None):
+               includes: Optional[Union[str, List[str]]] = None,
+               df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Since November 2017 we offer the ability to load historical Squads.
@@ -298,11 +527,67 @@ class SportMonks(BaseAPI):
             Parsed HTTP response from SportMonks API.
             JSON format.
         """
+        squads = self.make_request(endpoint=["squad", "season", season_id, "team", team_id],
+                                   includes=includes)
+        if df:
+            try:
+                df_squads = self._to_df(squads, cols=df_cols)
+                return df_squads
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return squads
+        else:
+            return squads
 
-        return self.make_request(endpoint=["squad", "season", season_id, "team", team_id],
-                                 includes=includes)
 
-    def commentaries(self, fixture_id: int):
+    def head2head(self, team1_id: int, team2_id: int,
+                  includes: Optional[Union[str, List[str]]] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+
+        """
+        The Head 2 Head endpoint provides you all previous Games between 2 Teams
+
+        Args:
+            team1_id:
+                id of team 1.
+            team2_id:
+                id of team 2.
+            includes: optional
+                Possible includes: localTeam, visitorTeam, substitutions, goals, cards,
+                other, events, corners,lineup, bench, sidelined, comments, tvstations,
+                highlights, round, stage, referee, venue, odds,
+                inplayOdds, flatOdds, localCoach, visitorCoach, group, trends.
+                ***See Sportmonks.com for information regarding includes.
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+
+        """
+        h2h = self.make_request(endpoint=["head2head", team1_id, team2_id], includes=includes)
+
+        if df:
+            try:
+                df_h2h = self._to_df(h2h, cols=df_cols)
+                return df_h2h
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return h2h
+        else:
+            return h2h
+
+    def head2head_results(self):
+        """Placeholder"""
+        return None
+
+class Commentaries(BaseAPI):
+    """Commentaries Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def commentaries(self, fixture_id: int, df: bool = False,
+                     df_cols: Optional[Union[str, List[str]]] = None):
         """
         The Commentary endpoint can be used to request the Textual representation of
         actions taken place in the Game.
@@ -317,43 +602,88 @@ class SportMonks(BaseAPI):
             Parsed HTTP response from SportMonks API.
             JSON format.
         """
+        commentaries = self.make_request(endpoint=["commentaries", "fixture", fixture_id])[::-1]
+        if df:
+            try:
+                df_commentaries = self._to_df(commentaries, cols=df_cols)
+                return df_commentaries
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return commentaries
+        else:
+            return commentaries
 
-        return self.make_request(endpoint=["commentaries", "fixture", fixture_id])
+class Venues(BaseAPI):
+    """Venues class"""
 
-    def venues(self, venue_id: Optional[int] = None,
-               season_id: Optional[int] = None):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def by_id(self, venue_id: int, df: bool = False,
+              df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Venue endpoint provides Venue information like Name, City,
         Capacity, Address and even a Venue image.
         If venue_id supplied, then info will be returned for that venue.
-        If season_id supplied, then all venues for that season will be returned.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
 
         Args:
             venue_id:
                 id of the venue you want to return.
-            season_id:
-                id of the season you want the venues for
 
-        Response:
+        Returns:
             Parsed HTTP response from SportMonks API.
             JSON format.
 
         """
-
-        if venue_id and season_id:
-            raise IncompatibleArgs("Only one of season_id and venue_id can be supplied.")
-
-        if venue_id:
-            return self.make_request(endpoint=["venues", venue_id])
-        elif season_id:
-            return self.make_request(endpoint=["venues", "season", season_id])
+        venue = self.make_request(endpoint=["venues", venue_id])
+        if df:
+            try:
+                df_venue = self._to_df(venue, cols=df_cols)
+                return df_venue
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return venue
         else:
-            # check what happpens when nothing supplied
-            pass
+            return venue
 
-    def coaches(self, coach_id: int):
+
+    def by_season(self, season_id: int, df: bool = False,
+                  df_cols: Optional[Union[str, List[str]]] = None):
+        """
+        The Venue endpoint provides Venue information like Name, City,
+        Capacity, Address and even a Venue image.
+        ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
+
+        Args:
+            season_id:
+                id of the season you want to retrieve venues for.
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+
+        """
+        venues = self.make_request(endpoint=["venues", "season", season_id])
+        if df:
+            try:
+                df_venues = self._to_df(venues, cols=df_cols)
+                return df_venues
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return venues
+        else:
+            return venues
+
+class Coaches(BaseAPI):
+    """Coaches Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def coaches(self, coach_id: int, df: bool = False,
+                df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Coaches endpoint provides you details about the Coach like its Name,
@@ -371,21 +701,66 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
-        return self.make_request(endpoint=["coaches", coach_id])
+        coach = self.make_request(endpoint=["coaches", coach_id])
+        if df:
+            try:
+                df_coach = self._to_df(coach, cols=df_cols)
+                return df_coach
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return coach
+        else:
+            return coach
 
-    def rounds(self, round_id: Optional[int] = None,
-               season_id: Optional[int] = None,
-               includes: Optional[Union[str, List[str]]] = None):
+class Rounds(BaseAPI):
+    """Rounds Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def by_round(self, round_id: int,
+                 includes: Optional[Union[str, List[str]]] = None,
+                 df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Leagues can be split up in Rounds representing a week a game is played in.
         With this endpoint we give you the ability to request data for a single
         Round as well as all Rounds of a Season. The endpoint is often used in
-        combination with includeslike Results or Fixtures to show them based on Rounds.
+        combination with includes like Results or Fixtures to show them based on Rounds.
 
         Args:
             round_id:
                 id of the round you want returning.
+            includes:
+                Possible includes: fixtures, results, season, league.
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+
+        """
+        rounds = self.make_request(endpoint=["rounds", round_id], includes=includes)
+        if df:
+            try:
+                df_rounds = self._to_df(rounds, cols=df_cols)
+                return df_rounds
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return rounds
+        else:
+            return rounds
+
+    def by_season(self, season_id: int,
+                  includes: Optional[Union[str, List[str]]] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+        """
+        Leagues can be split up in Rounds representing a week a game is played in.
+        With this endpoint we give you the ability to request data for a single
+        Round as well as all Rounds of a Season. The endpoint is often used in
+        combination with includeslike Results or Fixtures to show them based on Rounds.
+        Returns ids of the gameweeks for the season.
+
+        Args:
             season_id:
                 id of the season you want returning.
             includes:
@@ -396,19 +771,26 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
+        rounds = self.make_request(endpoint=["rounds", "season", season_id],
+                                   includes=includes)
+        if df:
+            try:
+                df_rounds = self._to_df(rounds, cols=df_cols)
+                return df_rounds
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return rounds
+        else:
+            return rounds
 
-        if round_id and season_id:
-            raise IncompatibleArgs("Cannot have both round_id and season_id.")
+class Stages(BaseAPI):
+    """Stages Class"""
 
-        if round_id:
-            return self.make_request(endpoint=["round", round_id], includes=includes)
-        elif season_id:
-            return self.make_request(endpoint=["rounds", "season", season_id],
-                                     includes=includes)
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
 
-    def stages(self, stage_id: Optional[int] = None,
-               season_id: Optional[int] = None,
-               includes: Optional[Union[str, List[str]]] = None):
+    def by_stage(self, stage_id: int, includes: Optional[Union[str, List[str]]] = None,
+                 df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Leagues and Seasons all over the world can have a different set up.
@@ -419,8 +801,6 @@ class SportMonks(BaseAPI):
         Args:
             stage_id:
                 id of the stage you want to return info from.
-            season_id:
-                id of the season you want the stages for.
             includes:
                 Possible includes: fixtures, results, season, league
 
@@ -428,20 +808,57 @@ class SportMonks(BaseAPI):
             Parsed HTTP response from SportMonks API.
             JSON format.
         """
-        if stage_id and season_id:
-            raise IncompatibleArgs("Cannot supply stage_id and season_id.")
 
-        if stage_id:
-            return self.make_request(endpoint=["stages", stage_id], includes=includes)
-        elif season_id:
-            return self.make_request(endpoint=["stages", "season", season_id], includes=includes)
+        stages = self.make_request(endpoint=["stages", stage_id], includes=includes)
+        if df:
+            try:
+                df_stages = self._to_df(stages, cols=df_cols)
+                return df_stages
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return stages
         else:
-            # what happens when nothing is supplied
-            pass
+            return stages
 
-    def players(self, player_id: Optional[int] = None,
-                search: Optional[str] = None,
-                includes: Optional[Union[str, List[str]]] = None):
+
+    def by_season(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+        """
+        Leagues and Seasons all over the world can have a different set up.
+        The Stages endpoint can help you to define the current
+        Stage or set up of multiple Stages of a particular League/Season.
+        Stages names are for example: Regular Season, Play-offs, Semi-Finals, Final etc.
+
+        Args:
+            season_id:
+                id of the season you want to return info from.
+            includes:
+                Possible includes: fixtures, results, season, league
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+        """
+
+        seasons = self.make_request(endpoint=["stages", "season", season_id], includes=includes)
+        if df:
+            try:
+                df_seasons = self._to_df(seasons, cols=df_cols)
+                return df_seasons
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return seasons
+        else:
+            return seasons
+
+class Players(BaseAPI):
+    """Players Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    def by_id(self, player_id: int, includes: Optional[Union[str, List[str]]] = None,
+              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         The Players endpoint provides you detailed Player information.
         With this endpoint you will be able to build a complete Player Profile.
@@ -449,6 +866,35 @@ class SportMonks(BaseAPI):
         Args:
             player_id:
                 id of the player.
+            includes: optional
+                Possible includes: position, team, stats, trophies,
+                sidelined, transfers, lineups, country.
+                ***See Sportmonks.com for information regarding includes.
+
+        Returns:
+            Parsed HTTP response from SportMonks API.
+            JSON format.
+
+       """
+
+        player = self.make_request(endpoint=["players", player_id], includes=includes)
+        if df:
+            try:
+                df_player = self._to_df(player, cols=df_cols)
+                return df_player
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return player
+        else:
+            return player
+
+    def by_name(self, search: str, includes: Optional[Union[str, List[str]]] = None,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+        """
+        The Players endpoint provides you detailed Player information.
+        With this endpoint you will be able to build a complete Player Profile.
+
+        Args:
             search:
                 name of the player.
             includes: optional
@@ -461,21 +907,60 @@ class SportMonks(BaseAPI):
             JSON format.
 
        """
-        if player_id and search:
-            raise IncompatibleArgs("Only one of player_id or search can be specified.")
 
-        if player_id:
-            return self.make_request(endpoint=["players", player_id], includes=includes)
-        elif search:
-            return self.make_request(endpoint=["players", "search", search], includes=includes)
+        players = self.make_request(endpoint=["players", "search", search], includes=includes)
+        if df:
+            try:
+                df_players = self._to_df(players, cols=df_cols)
+                return df_players
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return players
         else:
-            # what happens if nothing is supplied
-            pass
+            return players
 
-    def fixtures(self, fixture_ids: Union[int, List[int]],
-                 markets: Optional[Union[int, List[int]]] = None,
-                 bookmakers: Optional[Union[int, List[int]]] = None,
-                 includes: Optional[Union[str, List[str]]] = None):
+class Fixtures(BaseAPI):
+    """Fixtures Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
+
+    @staticmethod
+    def __stats_includes(response: Union[dict, List[dict]]):
+        """Placeholder"""
+
+        if isinstance(response, list):
+            for fixt in response:
+                statistics = fixt.get("stats")
+                if len(statistics) == 2:
+                    fixt["home"] = statistics[0]
+                    fixt["away"] = statistics[1]
+                    del fixt["stats"]
+                else:
+                    log.info("Length of statistics: %s", len(statistics))
+                    fixt["home"] = {}
+                    fixt["away"] = {}
+                    del fixt["stats"]
+
+        elif isinstance(response, dict):
+            statistics = response.get("stats")
+            if len(statistics) == 2:
+                response["home"] = statistics[0]
+                response["away"] = statistics[1]
+                del response["stats"]
+            else:
+                log.info("Length of statistics: %s", len(statistics))
+                response["home"] = {}
+                response["away"] = {}
+                del response["stats"]
+
+        return response
+
+    def by_id(self, fixture_ids: Union[int, List[int]],
+              markets: Optional[Union[int, List[int]]] = None,
+              bookmakers: Optional[Union[int, List[int]]] = None,
+              includes: Optional[Union[str, List[str]]] = None,
+              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Fixture endpoint provides information about Games in particular Leagues.
@@ -509,17 +994,35 @@ class SportMonks(BaseAPI):
 
         if isinstance(fixture_ids, list):
             fixture_ids = ",".join(list(map(str, fixture_ids)))
-            return self.make_request(endpoint=["fixtures", "multi", fixture_ids],
-                                     includes=includes, params=params)
+            fixtures = self.make_request(endpoint=["fixtures", "multi", fixture_ids],
+                                         includes=includes, params=params)
+            if df:
+                try:
+                    df_fixtures = self._to_df(fixtures, cols=df_cols)
+                    return df_fixtures
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return fixtures
+            else:
+                return fixtures
         else:
-            return self.make_request(endpoint=["fixtures", fixture_ids],
-                                     includes=includes, params=params)
+            fixtures = self.make_request(endpoint=["fixtures", fixture_ids],
+                                         includes=includes, params=params)
+            if df:
+                try:
+                    df_fixtures = self._to_df(fixtures, cols=df_cols)
+                    return df_fixtures
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return fixtures
+            else:
+                return fixtures
 
-
-    def fixtures_by_date(self, date: str, league_ids: Optional[Union[int, List[int]]] = None,
-                         markets: Optional[Union[int, List[int]]] = None,
-                         bookmakers: Optional[Union[int, List[int]]] = None,
-                         includes: Optional[Union[str, List[str]]] = None):
+    def by_date(self, date: str, league_ids: Optional[Union[int, List[int]]] = None,
+                markets: Optional[Union[int, List[int]]] = None,
+                bookmakers: Optional[Union[int, List[int]]] = None,
+                includes: Optional[Union[str, List[str]]] = None,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Fixtures by date.
@@ -555,15 +1058,25 @@ class SportMonks(BaseAPI):
 
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
 
-        return self.make_request(endpoint=["fixtures", "date", date],
-                                 includes=includes, params=params)
+        fixtures = self.make_request(endpoint=["fixtures", "date", date],
+                                     includes=includes, params=params)
+        if df:
+            try:
+                df_fixtures = self._to_df(fixtures, cols=df_cols)
+                return df_fixtures
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return fixtures
+        else:
+            return fixtures
 
-    def fixtures_in_data_range(self, start_date: str, end_date: str,
-                               team_id: Optional[int] = None,
-                               league_ids: Optional[Union[int, List[int]]] = None,
-                               markets: Optional[Union[int, List[int]]] = None,
-                               bookmakers: Optional[Union[int, List[int]]] = None,
-                               includes: Optional[Union[str, List[str]]] = None):
+    def by_date_range(self, start_date: str, end_date: str,
+                      team_id: Optional[int] = None,
+                      league_ids: Optional[Union[int, List[int]]] = None,
+                      markets: Optional[Union[int, List[int]]] = None,
+                      bookmakers: Optional[Union[int, List[int]]] = None,
+                      includes: Optional[Union[str, List[str]]] = None,
+                      df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Fixtures between start_date and end_date.
 
@@ -602,18 +1115,36 @@ class SportMonks(BaseAPI):
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
 
         if team_id:
-            return self.make_request(endpoint=["fixtures", "between", start_date, end_date,
-                                               team_id],
-                                     includes=includes, params=params)
+            fixtures = self.make_request(endpoint=["fixtures", "between", start_date, end_date,
+                                                   team_id],
+                                         includes=includes, params=params)
+            if df:
+                try:
+                    df_fixtures = self._to_df(fixtures, cols=df_cols)
+                    return df_fixtures
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return fixtures
+            else:
+                return fixtures
         else:
-            return self.make_request(endpoint=["fixtures", "between", start_date, end_date],
-                                     includes=includes, params=params)
-
+            fixtures = self.make_request(endpoint=["fixtures", "between", start_date, end_date],
+                                         includes=includes, params=params)
+            if df:
+                try:
+                    df_fixtures = self._to_df(fixtures, cols=df_cols)
+                    return df_fixtures
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return fixtures
+            else:
+                return fixtures
 
     def inplay_fixtures(self, markets: Optional[Union[int, List[int]]] = None,
                         bookmakers: Optional[Union[int, List[int]]] = None,
                         league_ids: Optional[Union[int, List[int]]] = None,
-                        includes: Optional[Union[str, List[str]]] = None):
+                        includes: Optional[Union[str, List[str]]] = None,
+                        df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Games currently being played
@@ -644,14 +1175,46 @@ class SportMonks(BaseAPI):
         """
 
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
-        return self.make_request(endpoint=["livescores", "now"], includes=includes,
-                                 params=params)
+        fixtures = self.make_request(endpoint=["livescores", "now"], includes=includes,
+                                     params=params)
+        if df:
+            try:
+                df_fixtures = self._to_df(fixtures, cols=df_cols)
+                return df_fixtures
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return fixtures
+        else:
+            return fixtures
 
+
+    def fixture_stats(self, fixture_ids: Union[int, List[int]],
+                      includes: Optional[Union[str, List[str]]] = None,
+                      cols: Optional[Union[str, List[str]]] = None):
+        """
+        Fixture statistics to a pandas DataFrame.
+        Recommended includes are:
+        league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
+        """
+
+        response = self.by_id(fixture_ids=fixture_ids, includes=includes)
+
+        if "stats" in includes:
+            response = self.__stats_includes(response)
+
+        return self._to_df(response, cols=cols)
+
+class Schedule(BaseAPI):
+    """Schedule (today) Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
 
     def schedule_today(self, markets: Optional[Union[int, List[int]]] = None,
                        bookmakers: Optional[Union[int, List[int]]] = None,
                        league_ids: Optional[Union[int, List[int]]] = None,
-                       includes: Optional[Union[str, List[str]]] = None):
+                       includes: Optional[Union[str, List[str]]] = None,
+                       df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Returns the schedule for the current day.
@@ -681,38 +1244,27 @@ class SportMonks(BaseAPI):
 
         """
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
-        return self.make_request(endpoint="livescores", includes=includes, params=params)
+        schedule = self.make_request(endpoint="livescores", includes=includes, params=params)
+        if df:
+            try:
+                df_schedule = self._to_df(schedule, cols=df_cols)
+                return df_schedule
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return schedule
+        else:
+            return schedule
 
+class Standings(BaseAPI):
+    """Standings Class"""
 
-    def head2head(self, team1_id: int, team2_id: int,
-                  includes: Optional[Union[str, List[str]]] = None):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
 
-        """
-        The Head 2 Head endpoint provides you all previous Games between 2 Teams
-
-        Args:
-            team1_id:
-                id of team 1.
-            team2_id:
-                id of team 2.
-            includes: optional
-                Possible includes: localTeam, visitorTeam, substitutions, goals, cards,
-                other, events, corners,lineup, bench, sidelined, comments, tvstations,
-                highlights, round, stage, referee, venue, odds,
-                inplayOdds, flatOdds, localCoach, visitorCoach, group, trends.
-                ***See Sportmonks.com for information regarding includes.
-
-        Returns:
-            Parsed HTTP response from SportMonks API.
-            JSON format.
-
-        """
-        return self.make_request(endpoint=["head2head", team1_id, team2_id], includes=includes)
-
-    def standings(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
+    def by_season(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
                   group_ids: Optional[Union[int, List[int]]] = None,
-                  stage_ids: Optional[Union[int, List[int]]] = None):
-
+                  stage_ids: Optional[Union[int, List[int]]] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Standings represent the rankings of Teams in the different Leagues they participate.
@@ -739,10 +1291,20 @@ class SportMonks(BaseAPI):
 
         """
         params = {"stage_ids": stage_ids, "group_ids": group_ids}
-        return self.make_request(endpoint=["standings", "season", season_id],
-                                 includes=includes, params=params)
+        standings = self.make_request(endpoint=["standings", "season", season_id],
+                                      includes=includes, params=params)
+        if df:
+            try:
+                df_standings = self._to_df(standings, cols=df_cols)
+                return df_standings
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return standings
+        else:
+            return standings
 
-    def standings_by_date(self, season_id: int, date: str):
+    def by_date(self, season_id: int, date: str,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         With this endpoint you are able to retrieve the standings at a given date(time).
         It will calculate the games played up until the given date/time and
@@ -762,10 +1324,26 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
-        return self.make_request(endpoint=["standings", "season", season_id, "date", date])
+        standings = self.make_request(endpoint=["standings", "season", season_id, "date", date])
+        if df:
+            try:
+                df_standings = self._to_df(standings, cols=df_cols)
+                return df_standings
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return standings
+        else:
+            return standings
+
+class TopScorers(BaseAPI):
+    """Topscorers Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
 
     def topscorers(self, season_id: int, stage_ids: Optional[Union[int, List[int]]] = None,
-                   includes: Optional[Union[str, List[str]]] = None):
+                   includes: Optional[Union[str, List[str]]] = None,
+                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Topscorers endpoint provides you accurate information about the Topscorers in Goals,
@@ -794,11 +1372,21 @@ class SportMonks(BaseAPI):
         """
 
         params = {"stage_ids": stage_ids}
-        return self.make_request(endpoint=["topscorers", "season", season_id],
-                                 includes=includes, params=params)
+        topscorers = self.make_request(endpoint=["topscorers", "season", season_id],
+                                       includes=includes, params=params)
+        if df:
+            try:
+                df_topscorers = self._to_df(topscorers, cols=df_cols)
+                return df_topscorers
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return topscorers
+        else:
+            return topscorers
 
     def aggregated_topscorers(self, season_id: int,
-                              includes: Optional[Union[str, List[str]]] = None):
+                              includes: Optional[Union[str, List[str]]] = None,
+                              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         This Topscorers endpoint returns the Aggregated Topscorers by Season.
@@ -818,12 +1406,27 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
-        return self.make_request(endpoint=["topscorers", "season", season_id, "aggregated"],
-                                 includes=includes)
+        topscorers = self.make_request(endpoint=["topscorers", "season", season_id, "aggregated"],
+                                       includes=includes)
+        if df:
+            try:
+                df_topscorers = self._to_df(topscorers, cols=df_cols)
+                return df_topscorers
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return topscorers
+        else:
+            return topscorers
 
+class Odds(BaseAPI):
+    """Odds Class"""
+
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+        super().__init__(api_key, timeout)
 
     def odds(self, fixture_id: int, bookmaker_id: Optional[int] = None,
-             market_id: Optional[int] = None):
+             market_id: Optional[int] = None, df: bool = False,
+             df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Odds are used to add betting functionality to your application.
@@ -845,18 +1448,47 @@ class SportMonks(BaseAPI):
 
         """
         if bookmaker_id and market_id:
-            return self.fixtures(fixture_ids=fixture_id, markets=market_id,
-                                 bookmakers=bookmaker_id, includes="odds").get("odds")
-        if bookmaker_id:
-            return self.make_request(endpoint=["odds", "fixture", fixture_id,
+            raise IncompatibleArgs("No endpoint for market and bookmaker id. Use \
+                                   the fixtures includes with markets and bookmaker params.")
+        elif bookmaker_id:
+            odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
                                                "bookmaker", bookmaker_id])
-        if market_id:
-            return self.make_request(endpoint=["odds", "fixture", fixture_id,
-                                               "market", market_id])
-        if not (bookmaker_id or market_id):
-            return self.make_request(endpoint=["odds", "fixture", fixture_id])
+            if df:
+                try:
+                    df_odds = self._to_df(odds, cols=df_cols)
+                    return df_odds
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return odds
+            else:
+                return odds
 
-    def live_odds(self, fixture_id: int):
+        elif market_id:
+            odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
+                                               "market", market_id])
+            if df:
+                try:
+                    df_odds = self._to_df(odds, cols=df_cols)
+                    return df_odds
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return odds
+            else:
+                return odds
+        else:
+            odds = self.make_request(endpoint=["odds", "fixture", fixture_id])
+            if df:
+                try:
+                    df_odds = self._to_df(odds, cols=df_cols)
+                    return df_odds
+                except NotJSONNormalizable:
+                    log.info("Not JSON-normalizable, returning JSON.")
+                    return odds
+            else:
+                return odds
+
+    def live_odds(self, fixture_id: int, df: bool = False,
+                  df_cols: Optional[Union[str, List[str]]] = None):
         """
         In play odds by fixture
         ***MUST HAVE ADVANCED SPORTMONKS PLAN
@@ -871,95 +1503,13 @@ class SportMonks(BaseAPI):
             JSON format.
 
         """
-        return self.make_request(endpoint=["odds", "inplay", "fixture", fixture_id])
-
-    @classmethod
-    def __is_normalizable(cls, response: dict):
-        """
-        Is the response JSON normalizable?
-        son_normalize only handels nested dictionaries,
-        if the values in the dicts are lists then they won't be unnested.
-        """
-
-        for key in response:
-            if isinstance(response[key], list):
-                log.debug("This key has a list value: %s", key)
-                return False
-            elif isinstance(response[key], dict):
-                cls.__is_normalizable(response[key])
-
-        return True
-
-    @staticmethod
-    def __stats_includes(response: Union[dict, List[dict]]):
-        """Placeholder"""
-
-        if isinstance(response, list):
-            for fixt in response:
-                statistics = fixt.get("stats")
-                if len(statistics) == 2:
-                    fixt["home"] = statistics[0]
-                    fixt["away"] = statistics[1]
-                    del fixt["stats"]
-                else:
-                    log.info("Length of statistics: %s", len(statistics))
-                    fixt["home"] = {}
-                    fixt["away"] = {}
-                    del fixt["stats"]
-
-        elif isinstance(response, dict):
-            statistics = response.get("stats")
-            if len(statistics) == 2:
-                response["home"] = statistics[0]
-                response["away"] = statistics[1]
-                del response["stats"]
-            else:
-                log.info("Length of statistics: %s", len(statistics))
-                response["home"] = {}
-                response["away"] = {}
-                del response["stats"]
-
-        return response
-
-
-    def fixture_stats(self, fixture_ids: Union[int, List[int]],
-                      includes: Optional[Union[str, List[str]]] = None,
-                      cols: Optional[Union[str, List[str]]] = None):
-        """
-        Fixture statistics to a pandas DataFrame.
-        Recommended includes are:
-        league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
-        """
-
-        response = self.fixtures(fixture_ids=fixture_ids, includes=includes)
-
-        if "stats" in includes:
-            response = self.__stats_includes(response)
-
-        if isinstance(response, dict):
-            if not self.__is_normalizable(response):
-                raise NotJSONNormalizable("Response is not JSON-normalizable.")
-        elif isinstance(response, list):
-            if not all(self.__is_normalizable(fixt) for fixt in response):
-                raise NotJSONNormalizable("Response is not JSON-normalizable.")
-
-        df = pd.json_normalize(response)
-
-        if cols:
+        odds = self.make_request(endpoint=["odds", "inplay", "fixture", fixture_id])
+        if df:
             try:
-                df = df[cols]
-            except KeyError as e:
-                log.info("No key, value pair for column: %s", e)
-                missing_keys = set(cols).difference(df.columns)
-                log.info("Missing keys: %s", missing_keys)
-                for key in missing_keys:
-                    df[key] = np.NaN
-                df = df[cols]
-
-        return df
-
-sm = SportMonks(KEY)
-df_data = sm.fixture_stats(fixture_ids=[300548, 300550], includes="visitorTeam,stats",
-                           cols=["id", "season_id"])
-
-print(df_data)
+                df_odds = self._to_df(odds, cols=df_cols)
+                return df_odds
+            except NotJSONNormalizable:
+                log.info("Not JSON-normalizable, returning JSON.")
+                return odds
+        else:
+            return odds
