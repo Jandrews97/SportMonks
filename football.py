@@ -20,7 +20,8 @@ class Continents(BaseAPI):
 
     def continents(self, continent_id: Optional[int] = None,
                    includes: Optional[Union[str, List[str]]] = None,
-                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                   filters: Optional[dict] = None, df: bool = False,
+                   df_cols: Optional[Union[str, List[str]]] = None):
         """
         The leagues endpoint helps you with assigning Countries and Leagues
         to the part of the world (Continent) they belong to.
@@ -43,10 +44,10 @@ class Continents(BaseAPI):
 
         """
 
-
         if continent_id:
             log.info("Get continent by id: %s, with includes = %s", continent_id, includes)
-            continents = self.make_request(endpoint=["continents", continent_id], includes=includes)
+            continents = self.make_request(endpoint=["continents", continent_id],
+                                           includes=includes, filters=filters)
             if df:
                 try:
                     df_continents = self._to_df(continents, cols=df_cols)
@@ -78,7 +79,8 @@ class Countries(BaseAPI):
 
     def countries(self, country_id: Optional[int] = None,
                   includes: Optional[Union[str, List[str]]] = None,
-                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                  filters: Optional[dict] = None, df: bool = False,
+                  df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Countries endpoint provides you Country information
@@ -101,7 +103,8 @@ class Countries(BaseAPI):
         """
         if country_id:
             log.info("Returning country by id: %s, with includes = %s", country_id, includes)
-            countries = self.make_request(endpoint=["countries", country_id], includes=includes)
+            countries = self.make_request(endpoint=["countries", country_id],
+                                          includes=includes, filters=filters)
             if df:
                 try:
                     df_countries = self._to_df(countries, cols=df_cols)
@@ -132,7 +135,8 @@ class Leagues(BaseAPI):
 
     def by_id(self, league_id: Optional[int] = None,
               includes: Optional[Union[str, List[str]]] = None,
-              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+              filters: Optional[dict] = None, df: bool = False,
+              df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         A request on this endpoint would return a response with all Leagues you have access to,
@@ -155,7 +159,8 @@ class Leagues(BaseAPI):
         """
         if league_id:
             log.info("Return a league by id: %s, with includes = %s", league_id, includes)
-            leagues = self.make_request(endpoint=["leagues", league_id], includes=includes)
+            leagues = self.make_request(endpoint=["leagues", league_id],
+                                        includes=includes, filters=filters)
             if df:
                 try:
                     df_leagues = self._to_df(leagues, cols=df_cols)
@@ -180,7 +185,8 @@ class Leagues(BaseAPI):
 
 
     def by_name(self, search: str, includes: Optional[Union[str, List[str]]] = None,
-                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                filters: Optional[dict] = None, df: bool = False,
+                df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         A request on this endpoint would return a response with all Leagues you have access to,
@@ -201,7 +207,8 @@ class Leagues(BaseAPI):
 
         """
         log.info("Returning a league by search: %s", search)
-        leagues = self.make_request(endpoint=["leagues", "search", search], includes=includes)
+        leagues = self.make_request(endpoint=["leagues", "search", search],
+                                    includes=includes, filters=filters)
         if df:
             try:
                 df_leagues = self._to_df(leagues, cols=df_cols)
@@ -221,7 +228,8 @@ class Seasons(BaseAPI):
 
     def seasons(self, season_id: Optional[int] = None,
                 includes: Optional[Union[str, List[str]]] = None,
-                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                filters: Optional[dict] = None, df: bool = False,
+                df_cols: Optional[Union[str, List[str]]] = None):
         """
         Responses of the Seasons endpoint are limited to Seasons of the Leagues available in the
         Plan you are subscribed to.
@@ -253,7 +261,8 @@ class Seasons(BaseAPI):
 
         if season_id:
             log.info("Returning season by id: %s, with includes = %s", season_id, includes)
-            seasons = self.make_request(endpoint=["seasons", season_id], includes=includes)
+            seasons = self.make_request(endpoint=["seasons", season_id],
+                                        includes=includes, filters=filters)
             if df:
                 try:
                     df_seasons = self._to_df(seasons, cols=df_cols)
@@ -284,7 +293,8 @@ class Bookmakers(BaseAPI):
 
 
     def bookmakers(self, bookmaker_id: Optional[int] = None,
-                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                   filters: Optional[dict] = None, df: bool = False,
+                   df_cols: Optional[Union[str, List[str]]] = None):
         """
         Return a bookmaker by id.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -301,7 +311,7 @@ class Bookmakers(BaseAPI):
         """
         if bookmaker_id:
             log.info("Returning bookmaker by id: %s", bookmaker_id)
-            bookmakers = self.make_request(endpoint=["bookmakers", bookmaker_id])
+            bookmakers = self.make_request(endpoint=["bookmakers", bookmaker_id], filters=filters)
             if df:
                 try:
                     df_bookmakers = self._to_df(bookmakers, cols=df_cols)
@@ -332,7 +342,8 @@ class Markets(BaseAPI):
         super().__init__(api_key, timeout)
 
     def markets(self, market_id: Optional[int] = None,
-                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                filters: Optional[dict] = None, df: bool = False,
+                df_cols: Optional[Union[str, List[str]]] = None):
         """
         Markets represent the betting options available per bookmaker.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -350,7 +361,7 @@ class Markets(BaseAPI):
 
         if market_id:
             log.info("Returning market: %s", market_id)
-            markets = self.make_request(endpoint=["markets", market_id])
+            markets = self.make_request(endpoint=["markets", market_id], filters=filters)
             if df:
                 try:
                     df_markets = self._to_df(markets, cols=df_cols)
@@ -380,7 +391,8 @@ class Teams(BaseAPI):
         super().__init__(api_key, timeout)
 
     def by_id(self, team_id: int, includes: Optional[Union[str, List[str]]] = None,
-              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+              filters: Optional[dict] = None, df: bool = False,
+              df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         With the Teams endpoint you can find all Team Details you need.
@@ -392,7 +404,7 @@ class Teams(BaseAPI):
                 id of the team you want to return.
             includes:
                 Possible includes: country, squad, coach, transfers, sidelined,
-                stats, venue, fifaranking,uefaranking, visitorFixtures, localFixtures,
+                stats, venue, fifaranking, uefaranking, visitorFixtures, localFixtures,
                 visitorResults, latest, upcoming, goalscorers,
                 cardscorers, assistscorers, aggregatedGoalscorers, aggregatedCardscorers,
                 aggregatedAssistscorers, league, activeSeasons, trophies.
@@ -402,7 +414,8 @@ class Teams(BaseAPI):
             Parsed HTTP response from SportMonks API.
             JSON format.
         """
-        team = self.make_request(endpoint=["teams", team_id], includes=includes)
+
+        team = self.make_request(endpoint=["teams", team_id], includes=includes, filters=filters)
         if df:
             try:
                 df_team = self._to_df(team, cols=df_cols)
@@ -415,7 +428,8 @@ class Teams(BaseAPI):
 
 
     def by_season_id(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
-                     df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                     filters: Optional[dict] = None, df: bool = False,
+                     df_cols: Optional[Union[str, List[str]]] = None):
         """
         With the Teams endpoint you can find all Team Details you need.
         You can think of information about when the Team is founded, Logo, Team Name,
@@ -437,7 +451,8 @@ class Teams(BaseAPI):
             JSON format.
         """
 
-        teams = self.make_request(endpoint=["teams", "season", season_id], includes=includes)
+        teams = self.make_request(endpoint=["teams", "season", season_id],
+                                  includes=includes, filters=filters)
         if df:
             try:
                 df_teams = self._to_df(teams, cols=df_cols)
@@ -448,8 +463,8 @@ class Teams(BaseAPI):
         else:
             return teams
 
-    def team_current_leagues(self, team_id: int, df: bool = False,
-                             df_cols: Optional[Union[str, List[str]]] = None):
+    def team_current_leagues(self, team_id: int, filters: Optional[dict] = None,
+                             df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Return all current leagues for a given team.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -463,7 +478,7 @@ class Teams(BaseAPI):
             JSON format.
 
         """
-        current_leagues = self.make_request(endpoint=["teams", team_id, "current"])
+        current_leagues = self.make_request(endpoint=["teams", team_id, "current"], filters=filters)
         if df:
             try:
                 df_current_leagues = self._to_df(current_leagues, cols=df_cols)
@@ -475,8 +490,8 @@ class Teams(BaseAPI):
             return current_leagues
 
 
-    def team_historic_leagues(self, team_id, df: bool = False,
-                              df_cols: Optional[Union[str, List[str]]] = None):
+    def team_historic_leagues(self, team_id, filters: Optional[dict] = None,
+                              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Return all historic leagues for a given team.
         ***NO INCLUDES AVAILABLE FOR THIS ENDPOINT
@@ -490,7 +505,8 @@ class Teams(BaseAPI):
             JSON format.
 
         """
-        historic_leagues = self.make_request(endpoint=["teams", team_id, "history"])
+        historic_leagues = self.make_request(endpoint=["teams", team_id, "history"],
+                                             filters=filters)
         if df:
             try:
                 df_historic_leagues = self._to_df(historic_leagues, cols=df_cols)
@@ -503,6 +519,7 @@ class Teams(BaseAPI):
 
     def squads(self, season_id: int, team_id: int,
                includes: Optional[Union[str, List[str]]] = None,
+               filters: Optional[dict] = None,
                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -528,7 +545,7 @@ class Teams(BaseAPI):
             JSON format.
         """
         squads = self.make_request(endpoint=["squad", "season", season_id, "team", team_id],
-                                   includes=includes)
+                                   includes=includes, filters=filters)
         if df:
             try:
                 df_squads = self._to_df(squads, cols=df_cols)
@@ -542,6 +559,7 @@ class Teams(BaseAPI):
 
     def head2head(self, team1_id: int, team2_id: int,
                   includes: Optional[Union[str, List[str]]] = None,
+                  filters: Optional[dict] = None,
                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -564,7 +582,8 @@ class Teams(BaseAPI):
             JSON format.
 
         """
-        h2h = self.make_request(endpoint=["head2head", team1_id, team2_id], includes=includes)
+        h2h = self.make_request(endpoint=["head2head", team1_id, team2_id],
+                                includes=includes, filters=filters)
 
         if df:
             try:
@@ -586,8 +605,8 @@ class Commentaries(BaseAPI):
     def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
         super().__init__(api_key, timeout)
 
-    def commentaries(self, fixture_id: int, df: bool = False,
-                     df_cols: Optional[Union[str, List[str]]] = None):
+    def commentaries(self, fixture_id: int, filters: Optional[dict] = None,
+                     df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         The Commentary endpoint can be used to request the Textual representation of
         actions taken place in the Game.
@@ -602,7 +621,8 @@ class Commentaries(BaseAPI):
             Parsed HTTP response from SportMonks API.
             JSON format.
         """
-        commentaries = self.make_request(endpoint=["commentaries", "fixture", fixture_id])[::-1]
+        commentaries = self.make_request(endpoint=["commentaries", "fixture", fixture_id],
+                                         filters=filters)[::-1]
         if df:
             try:
                 df_commentaries = self._to_df(commentaries, cols=df_cols)
@@ -619,8 +639,8 @@ class Venues(BaseAPI):
     def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
         super().__init__(api_key, timeout)
 
-    def by_id(self, venue_id: int, df: bool = False,
-              df_cols: Optional[Union[str, List[str]]] = None):
+    def by_id(self, venue_id: int, filters: Optional[dict] = None,
+              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Venue endpoint provides Venue information like Name, City,
@@ -637,7 +657,7 @@ class Venues(BaseAPI):
             JSON format.
 
         """
-        venue = self.make_request(endpoint=["venues", venue_id])
+        venue = self.make_request(endpoint=["venues", venue_id], filters=filters)
         if df:
             try:
                 df_venue = self._to_df(venue, cols=df_cols)
@@ -649,8 +669,8 @@ class Venues(BaseAPI):
             return venue
 
 
-    def by_season(self, season_id: int, df: bool = False,
-                  df_cols: Optional[Union[str, List[str]]] = None):
+    def by_season(self, season_id: int, filters: Optional[dict] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         The Venue endpoint provides Venue information like Name, City,
         Capacity, Address and even a Venue image.
@@ -665,7 +685,7 @@ class Venues(BaseAPI):
             JSON format.
 
         """
-        venues = self.make_request(endpoint=["venues", "season", season_id])
+        venues = self.make_request(endpoint=["venues", "season", season_id], filters=filters)
         if df:
             try:
                 df_venues = self._to_df(venues, cols=df_cols)
@@ -682,8 +702,8 @@ class Coaches(BaseAPI):
     def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
         super().__init__(api_key, timeout)
 
-    def coaches(self, coach_id: int, df: bool = False,
-                df_cols: Optional[Union[str, List[str]]] = None):
+    def coaches(self, coach_id: int, filters: Optional[dict] = None,
+                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Coaches endpoint provides you details about the Coach like its Name,
@@ -701,7 +721,7 @@ class Coaches(BaseAPI):
             JSON format.
 
         """
-        coach = self.make_request(endpoint=["coaches", coach_id])
+        coach = self.make_request(endpoint=["coaches", coach_id], filters=filters)
         if df:
             try:
                 df_coach = self._to_df(coach, cols=df_cols)
@@ -718,7 +738,7 @@ class Rounds(BaseAPI):
     def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
         super().__init__(api_key, timeout)
 
-    def by_round(self, round_id: int,
+    def by_round(self, round_id: int, filters: Optional[dict] = None,
                  includes: Optional[Union[str, List[str]]] = None,
                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
@@ -739,7 +759,8 @@ class Rounds(BaseAPI):
             JSON format.
 
         """
-        rounds = self.make_request(endpoint=["rounds", round_id], includes=includes)
+        rounds = self.make_request(endpoint=["rounds", round_id],
+                                   includes=includes, filters=filters)
         if df:
             try:
                 df_rounds = self._to_df(rounds, cols=df_cols)
@@ -750,7 +771,7 @@ class Rounds(BaseAPI):
         else:
             return rounds
 
-    def by_season(self, season_id: int,
+    def by_season(self, season_id: int, filters: Optional[dict] = None,
                   includes: Optional[Union[str, List[str]]] = None,
                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
@@ -772,7 +793,7 @@ class Rounds(BaseAPI):
 
         """
         rounds = self.make_request(endpoint=["rounds", "season", season_id],
-                                   includes=includes)
+                                   includes=includes, filters=filters)
         if df:
             try:
                 df_rounds = self._to_df(rounds, cols=df_cols)
@@ -790,7 +811,8 @@ class Stages(BaseAPI):
         super().__init__(api_key, timeout)
 
     def by_stage(self, stage_id: int, includes: Optional[Union[str, List[str]]] = None,
-                 df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                 filters: Optional[dict] = None, df: bool = False,
+                 df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Leagues and Seasons all over the world can have a different set up.
@@ -809,7 +831,8 @@ class Stages(BaseAPI):
             JSON format.
         """
 
-        stages = self.make_request(endpoint=["stages", stage_id], includes=includes)
+        stages = self.make_request(endpoint=["stages", stage_id],
+                                   includes=includes, filters=filters)
         if df:
             try:
                 df_stages = self._to_df(stages, cols=df_cols)
@@ -822,7 +845,8 @@ class Stages(BaseAPI):
 
 
     def by_season(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
-                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                  filters: Optional[dict] = None, df: bool = False,
+                  df_cols: Optional[Union[str, List[str]]] = None):
         """
         Leagues and Seasons all over the world can have a different set up.
         The Stages endpoint can help you to define the current
@@ -840,7 +864,8 @@ class Stages(BaseAPI):
             JSON format.
         """
 
-        seasons = self.make_request(endpoint=["stages", "season", season_id], includes=includes)
+        seasons = self.make_request(endpoint=["stages", "season", season_id],
+                                    includes=includes, filters=filters)
         if df:
             try:
                 df_seasons = self._to_df(seasons, cols=df_cols)
@@ -858,7 +883,8 @@ class Players(BaseAPI):
         super().__init__(api_key, timeout)
 
     def by_id(self, player_id: int, includes: Optional[Union[str, List[str]]] = None,
-              df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+              filters: Optional[dict] = None, df: bool = False,
+              df_cols: Optional[Union[str, List[str]]] = None):
         """
         The Players endpoint provides you detailed Player information.
         With this endpoint you will be able to build a complete Player Profile.
@@ -877,7 +903,8 @@ class Players(BaseAPI):
 
        """
 
-        player = self.make_request(endpoint=["players", player_id], includes=includes)
+        player = self.make_request(endpoint=["players", player_id],
+                                   includes=includes, filters=filters)
         if df:
             try:
                 df_player = self._to_df(player, cols=df_cols)
@@ -889,7 +916,8 @@ class Players(BaseAPI):
             return player
 
     def by_name(self, search: str, includes: Optional[Union[str, List[str]]] = None,
-                df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                filters: Optional[dict] = None, df: bool = False,
+                df_cols: Optional[Union[str, List[str]]] = None):
         """
         The Players endpoint provides you detailed Player information.
         With this endpoint you will be able to build a complete Player Profile.
@@ -908,7 +936,8 @@ class Players(BaseAPI):
 
        """
 
-        players = self.make_request(endpoint=["players", "search", search], includes=includes)
+        players = self.make_request(endpoint=["players", "search", search],
+                                    includes=includes, filters=filters)
         if df:
             try:
                 df_players = self._to_df(players, cols=df_cols)
@@ -960,6 +989,7 @@ class Fixtures(BaseAPI):
               markets: Optional[Union[int, List[int]]] = None,
               bookmakers: Optional[Union[int, List[int]]] = None,
               includes: Optional[Union[str, List[str]]] = None,
+              filters: Optional[dict] = None,
               df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -995,7 +1025,7 @@ class Fixtures(BaseAPI):
         if isinstance(fixture_ids, list):
             fixture_ids = ",".join(list(map(str, fixture_ids)))
             fixtures = self.make_request(endpoint=["fixtures", "multi", fixture_ids],
-                                         includes=includes, params=params)
+                                         includes=includes, params=params, filters=filters)
             if df:
                 try:
                     df_fixtures = self._to_df(fixtures, cols=df_cols)
@@ -1022,6 +1052,7 @@ class Fixtures(BaseAPI):
                 markets: Optional[Union[int, List[int]]] = None,
                 bookmakers: Optional[Union[int, List[int]]] = None,
                 includes: Optional[Union[str, List[str]]] = None,
+                filters: Optional[dict] = None,
                 df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -1059,7 +1090,7 @@ class Fixtures(BaseAPI):
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
 
         fixtures = self.make_request(endpoint=["fixtures", "date", date],
-                                     includes=includes, params=params)
+                                     includes=includes, params=params, filters=filters)
         if df:
             try:
                 df_fixtures = self._to_df(fixtures, cols=df_cols)
@@ -1076,6 +1107,7 @@ class Fixtures(BaseAPI):
                       markets: Optional[Union[int, List[int]]] = None,
                       bookmakers: Optional[Union[int, List[int]]] = None,
                       includes: Optional[Union[str, List[str]]] = None,
+                      filters: Optional[dict] = None,
                       df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         Fixtures between start_date and end_date.
@@ -1117,7 +1149,7 @@ class Fixtures(BaseAPI):
         if team_id:
             fixtures = self.make_request(endpoint=["fixtures", "between", start_date, end_date,
                                                    team_id],
-                                         includes=includes, params=params)
+                                         includes=includes, params=params, filters=filters)
             if df:
                 try:
                     df_fixtures = self._to_df(fixtures, cols=df_cols)
@@ -1144,6 +1176,7 @@ class Fixtures(BaseAPI):
                         bookmakers: Optional[Union[int, List[int]]] = None,
                         league_ids: Optional[Union[int, List[int]]] = None,
                         includes: Optional[Union[str, List[str]]] = None,
+                        filters: Optional[dict] = None,
                         df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -1176,7 +1209,7 @@ class Fixtures(BaseAPI):
 
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
         fixtures = self.make_request(endpoint=["livescores", "now"], includes=includes,
-                                     params=params)
+                                     params=params, filters=filters)
         if df:
             try:
                 df_fixtures = self._to_df(fixtures, cols=df_cols)
@@ -1214,6 +1247,7 @@ class Schedule(BaseAPI):
                        bookmakers: Optional[Union[int, List[int]]] = None,
                        league_ids: Optional[Union[int, List[int]]] = None,
                        includes: Optional[Union[str, List[str]]] = None,
+                       filters: Optional[dict] = None,
                        df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -1244,7 +1278,8 @@ class Schedule(BaseAPI):
 
         """
         params = {"leagues": league_ids, "markets": markets, "bookmakers": bookmakers}
-        schedule = self.make_request(endpoint="livescores", includes=includes, params=params)
+        schedule = self.make_request(endpoint="livescores", includes=includes,
+                                     params=params, filters=filters)
         if df:
             try:
                 df_schedule = self._to_df(schedule, cols=df_cols)
@@ -1264,6 +1299,7 @@ class Standings(BaseAPI):
     def by_season(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
                   group_ids: Optional[Union[int, List[int]]] = None,
                   stage_ids: Optional[Union[int, List[int]]] = None,
+                  filters: Optional[dict] = None,
                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -1292,7 +1328,7 @@ class Standings(BaseAPI):
         """
         params = {"stage_ids": stage_ids, "group_ids": group_ids}
         standings = self.make_request(endpoint=["standings", "season", season_id],
-                                      includes=includes, params=params)
+                                      includes=includes, params=params, filters=filters)
         if df:
             try:
                 df_standings = self._to_df(standings, cols=df_cols)
@@ -1303,7 +1339,7 @@ class Standings(BaseAPI):
         else:
             return standings
 
-    def by_date(self, season_id: int, date: str,
+    def by_date(self, season_id: int, date: str, filters: Optional[dict] = None,
                 df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         With this endpoint you are able to retrieve the standings at a given date(time).
@@ -1324,7 +1360,8 @@ class Standings(BaseAPI):
             JSON format.
 
         """
-        standings = self.make_request(endpoint=["standings", "season", season_id, "date", date])
+        standings = self.make_request(endpoint=["standings", "season", season_id, "date", date],
+                                      filters=filters)
         if df:
             try:
                 df_standings = self._to_df(standings, cols=df_cols)
@@ -1343,7 +1380,8 @@ class TopScorers(BaseAPI):
 
     def topscorers(self, season_id: int, stage_ids: Optional[Union[int, List[int]]] = None,
                    includes: Optional[Union[str, List[str]]] = None,
-                   df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
+                   filters: Optional[dict] = None, df: bool = False,
+                   df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         The Topscorers endpoint provides you accurate information about the Topscorers in Goals,
@@ -1373,7 +1411,7 @@ class TopScorers(BaseAPI):
 
         params = {"stage_ids": stage_ids}
         topscorers = self.make_request(endpoint=["topscorers", "season", season_id],
-                                       includes=includes, params=params)
+                                       includes=includes, params=params, filters=filters)
         if df:
             try:
                 df_topscorers = self._to_df(topscorers, cols=df_cols)
@@ -1386,6 +1424,7 @@ class TopScorers(BaseAPI):
 
     def aggregated_topscorers(self, season_id: int,
                               includes: Optional[Union[str, List[str]]] = None,
+                              filters: Optional[dict] = None,
                               df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
@@ -1407,7 +1446,7 @@ class TopScorers(BaseAPI):
 
         """
         topscorers = self.make_request(endpoint=["topscorers", "season", season_id, "aggregated"],
-                                       includes=includes)
+                                       includes=includes, filters=filters)
         if df:
             try:
                 df_topscorers = self._to_df(topscorers, cols=df_cols)
@@ -1425,8 +1464,8 @@ class Odds(BaseAPI):
         super().__init__(api_key, timeout)
 
     def odds(self, fixture_id: int, bookmaker_id: Optional[int] = None,
-             market_id: Optional[int] = None, df: bool = False,
-             df_cols: Optional[Union[str, List[str]]] = None):
+             market_id: Optional[int] = None, filters: Optional[dict] = None,
+             df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
 
         """
         Odds are used to add betting functionality to your application.
@@ -1452,7 +1491,7 @@ class Odds(BaseAPI):
                                    the fixtures includes with markets and bookmaker params.")
         elif bookmaker_id:
             odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
-                                               "bookmaker", bookmaker_id])
+                                               "bookmaker", bookmaker_id], filters=filters)
             if df:
                 try:
                     df_odds = self._to_df(odds, cols=df_cols)
@@ -1465,7 +1504,7 @@ class Odds(BaseAPI):
 
         elif market_id:
             odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
-                                               "market", market_id])
+                                               "market", market_id], filters=filters)
             if df:
                 try:
                     df_odds = self._to_df(odds, cols=df_cols)
@@ -1476,7 +1515,7 @@ class Odds(BaseAPI):
             else:
                 return odds
         else:
-            odds = self.make_request(endpoint=["odds", "fixture", fixture_id])
+            odds = self.make_request(endpoint=["odds", "fixture", fixture_id], filters=filters)
             if df:
                 try:
                     df_odds = self._to_df(odds, cols=df_cols)
@@ -1487,8 +1526,8 @@ class Odds(BaseAPI):
             else:
                 return odds
 
-    def live_odds(self, fixture_id: int, df: bool = False,
-                  df_cols: Optional[Union[str, List[str]]] = None):
+    def live_odds(self, fixture_id: int, filters: Optional[dict] = None,
+                  df: bool = False, df_cols: Optional[Union[str, List[str]]] = None):
         """
         In play odds by fixture
         ***MUST HAVE ADVANCED SPORTMONKS PLAN
@@ -1503,7 +1542,8 @@ class Odds(BaseAPI):
             JSON format.
 
         """
-        odds = self.make_request(endpoint=["odds", "inplay", "fixture", fixture_id])
+        odds = self.make_request(endpoint=["odds", "inplay", "fixture", fixture_id],
+                                 filters=filters)
         if df:
             try:
                 df_odds = self._to_df(odds, cols=df_cols)
@@ -1513,3 +1553,7 @@ class Odds(BaseAPI):
                 return odds
         else:
             return odds
+
+sm = Teams(KEY)
+
+helper.to_json(sm.head2head(8,9), "help.json")

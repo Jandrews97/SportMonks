@@ -168,15 +168,22 @@ class BaseAPI(object):
 
     def make_request(self, endpoint: Union[str, List[str]],
                      includes: Optional[List[str]] = None,
-                     params: Optional[dict] = None):
+                     params: Optional[dict] = None,
+                     filters: Optional[dict] = None):
 
         """Make a GET reqeust to SportMonks API"""
+
+
 
         if params:
             params = self.process_params(params)
             params.update(self.initial_params)
         else:
             params = self.initial_params
+
+        if filters:
+            filters = self.process_params(filters)
+            params.update(filters)
 
         if includes:
             includes = self.process_includes(includes)
@@ -200,7 +207,6 @@ class BaseAPI(object):
 
         try:
             response = r.json()
-            log.info("response: %s", response)
         except ValueError as e:
             log.info("Could not decode response in to JSON: %s", e)
             raise SystemExit(e)
