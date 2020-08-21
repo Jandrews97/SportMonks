@@ -595,9 +595,24 @@ class Teams(BaseAPI):
         else:
             return h2h
 
-    def head2head_results(self):
-        """Placeholder"""
-        return None
+    def head2head_results(self, team1_id: int, team2_id: int,
+                          filters: Optional[dict] = None):
+        """
+        Historic results between two teams.
+        Filter by season/league to return results from a season or league.
+        """
+        response = self.head2head(team1_id=team1_id, team2_id=team2_id,
+                                  filters=filters, includes=["localTeam, visitorTeam"],
+                                  df=True, df_cols=["id", "league_id", "season_id",
+                                                    "localteam_id", "localTeam.name",
+                                                    "visitorteam_id", "visitorTeam.name",
+                                                    "time.starting_at.date_time",
+                                                    "scores.ft_score"])
+        response["time.starting_at.date_time"] = \
+                                        pd.to_datetime(response["time.starting_at.date_time"])
+        response.sort_values(by="time.starting_at.date_time", ascending=False)
+
+        return response
 
 class Commentaries(BaseAPI):
     """Commentaries Class"""
@@ -1222,20 +1237,42 @@ class Fixtures(BaseAPI):
 
 
     def fixture_stats(self, fixture_ids: Union[int, List[int]],
-                      includes: Optional[Union[str, List[str]]] = None,
+                      includes: Optional[Union[str, List[str]]] = "stats",
+                      filters: Optional[dict] = None,
                       cols: Optional[Union[str, List[str]]] = None):
         """
         Fixture statistics to a pandas DataFrame.
+        ***Use stats includes.
         Recommended includes are:
         league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
         """
 
-        response = self.by_id(fixture_ids=fixture_ids, includes=includes)
-
-        if "stats" in includes:
-            response = self.__stats_includes(response)
+        response = self.by_id(fixture_ids=fixture_ids,
+                              includes=includes, filters=filters)
+        response = self.__stats_includes(response)
 
         return self._to_df(response, cols=cols)
+
+    def player_stats(self, fixture_ids: Union[int, List[int]],
+                     includes: Optional[Union[str, List[str]]] = "lineup",
+                     filters: Optional[dict] = None,
+                     cols: Optional[Union[str, List[str]]] = None):
+        """
+        Player statistics from a fixture(s).
+        """
+
+        response = self.by_id(fixture_ids=fixture_ids,
+                              includes=includes, filters=filters)
+        player_stats = []
+        if isinstance(response, list):
+            for fixt in response:
+                player_stats += [i for i in fixt.get("lineup")]
+        elif isinstance(response, dict):
+            player_stats = response["lineup"]
+        else:
+            raise TypeError(f"Did not expect response of type: {type(response)}")
+
+        return self._to_df(player_stats, cols=cols)
 
 class Schedule(BaseAPI):
     """Schedule (today) Class"""
@@ -1488,7 +1525,7 @@ class Odds(BaseAPI):
         """
         if bookmaker_id and market_id:
             raise IncompatibleArgs("No endpoint for market and bookmaker id. Use \
-                                   the fixtures includes with markets and bookmaker params.")
+                                   the filters keyword instead.")
         elif bookmaker_id:
             odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
                                                "bookmaker", bookmaker_id], filters=filters)
@@ -1506,8 +1543,20 @@ class Odds(BaseAPI):
             odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
                                                "market", market_id], filters=filters)
             if df:
+                new_json = {"id": fixture_id}
+                odds = odds[0] if len(odds) != 0 else None
+                new_json["market_id"] = odds.get("id")
+                new_json["market"] = odds.get("name")
+                bookmakers = odds.get("bookmaker")
+
+                for i in bookmakers:
+                    actual_odds = i.get("odds")
+
+                    for j in actual_odds:
+                        new_json[i.get("name") + "_" +
+                                 j.get("label")] = j.get("value")
                 try:
-                    df_odds = self._to_df(odds, cols=df_cols)
+                    df_odds = self._to_df(new_json, cols=df_cols)
                     return df_odds
                 except NotJSONNormalizable:
                     log.info("Not JSON-normalizable, returning JSON.")
@@ -1554,6 +1603,29 @@ class Odds(BaseAPI):
         else:
             return odds
 
-sm = Teams(KEY)
+    def best_odds(self, fixture_id: int, market_id: int,
+                  filters: Optional[dict] = None):
 
-helper.to_json(sm.head2head(8,9), "help.json")
+        """
+        Return the best odds for a given market across
+        bookmakers specified in the filters keyword.
+        If no filters given, then all bookmakers will be considered.
+        """
+        odds_df = self.odds(fixture_id=fixture_id, market_id=market_id,
+                            filters=filters, df=True)
+
+        if market_id == 1:
+            home_win = odds_df.filter(regex=(".*_1")).astype(float)
+            draw = odds_df.filter(regex=(".*_X")).astype(float)
+            away_win = odds_df.filter(regex=(".*_2")).astype(float)
+
+            home = (str(home_win.idxmax(axis=1)[0]).split("_")[0],
+                    home_win.max(axis=1)[0])
+            draw = (str(draw.idxmax(axis=1)[0]).split("_")[0],
+                    draw.max(axis=1)[0])
+            away = (str(away_win.idxmax(axis=1)[0]).split("_")[0],
+                    away_win.max(axis=1)[0])
+
+            return print(f"Home Win: {home[0]}" + "-" +  f"{home[1]} \n" \
+                         f"Away Win: {away[0]}" + "-" +  f"{away[1]} \n" \
+                         f"Draw: {draw[0]}" + "-" +  f"{draw[1]}")
