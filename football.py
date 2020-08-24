@@ -10,7 +10,7 @@ import helper
 from errors import IncompatibleArgs, NotJSONNormalizable
 
 log = helper.setup_logger(__name__, "SM_API.log")
-KEY = os.environ.get("SportMonks_API_KEY")
+KEY = os.environ.get("SPORTMONKS_KEY")
 
 class Continents(BaseAPI):
     """Continents Class."""
@@ -1525,7 +1525,7 @@ class Odds(BaseAPI):
         """
         if bookmaker_id and market_id:
             raise IncompatibleArgs("No endpoint for market and bookmaker id. Use \
-                                   the filters keyword instead.")
+                                   the filters keyword with market_id or bookmaker_id endpoint.")
         elif bookmaker_id:
             odds = self.make_request(endpoint=["odds", "fixture", fixture_id,
                                                "bookmaker", bookmaker_id], filters=filters)
@@ -1553,8 +1553,17 @@ class Odds(BaseAPI):
                     actual_odds = i.get("odds")
 
                     for j in actual_odds:
-                        new_json[i.get("name") + "_" +
-                                 j.get("label")] = j.get("value")
+                        if j.get("total") is not None:
+                            if ("." in  j.get("total")) and \
+                               (j.get("total").split(".")[1] == "5"):
+                               # only want Over1.5, Under2.5 for example.
+                                new_json[
+                                    i.get("name") + "_" + j.get("label") + str(j.get("total"))
+                                ] = j.get("value")
+
+                        else:
+                            new_json[i.get("name") + "_" +
+                                     j.get("label")] = j.get("value")
                 try:
                     df_odds = self._to_df(new_json, cols=df_cols)
                     return df_odds
@@ -1603,7 +1612,21 @@ class Odds(BaseAPI):
         else:
             return odds
 
-    def best_odds(self, fixture_id: int, market_id: int,
+    @staticmethod
+    def _preprocess(df: pd.DataFrame, label: str):
+        """Find max/average odds"""
+
+        market_label = df.filter(regex=(f".*_{label}")).astype(float)
+        if list(market_label.columns) == []:
+            log.info("No odds given for that label.")
+            return None
+
+        max_odds = market_label.max(axis=1)[0]
+        bookmaker = market_label.idxmax(axis=1)[0].split("_")[0]
+
+        return max_odds, bookmaker
+
+    def best_odds(self, fixture_id: int, market_id: int, label: str,
                   filters: Optional[dict] = None):
 
         """
@@ -1614,18 +1637,22 @@ class Odds(BaseAPI):
         odds_df = self.odds(fixture_id=fixture_id, market_id=market_id,
                             filters=filters, df=True)
 
-        if market_id == 1:
-            home_win = odds_df.filter(regex=(".*_1")).astype(float)
-            draw = odds_df.filter(regex=(".*_X")).astype(float)
-            away_win = odds_df.filter(regex=(".*_2")).astype(float)
+        return self._preprocess(odds_df, label)
 
-            home = (str(home_win.idxmax(axis=1)[0]).split("_")[0],
-                    home_win.max(axis=1)[0])
-            draw = (str(draw.idxmax(axis=1)[0]).split("_")[0],
-                    draw.max(axis=1)[0])
-            away = (str(away_win.idxmax(axis=1)[0]).split("_")[0],
-                    away_win.max(axis=1)[0])
+    def average_odds(self, fixture_id: int, market_id: int, label: str,
+                     filters: Optional[dict] = None):
 
-            return print(f"Home Win: {home[0]}" + "-" +  f"{home[1]} \n" \
-                         f"Away Win: {away[0]}" + "-" +  f"{away[1]} \n" \
-                         f"Draw: {draw[0]}" + "-" +  f"{draw[1]}")
+        """
+        Return average odds for a market across bookmakers
+        specified in the filter keyword.
+        If no filter is given, then average of all bookmakers will be considered.
+        """
+        odds_df = self.odds(fixture_id=fixture_id, market_id=market_id,
+                            filters=filters, df=True)
+
+        market_label = odds_df.filter(regex=(f".*_{label}")).astype(float)
+        if list(market_label) == []:
+            log.info("No odds given for that label.")
+            return None
+
+        return label, round(market_label.mean(axis=1)[0], 2)
