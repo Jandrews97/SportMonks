@@ -15,7 +15,7 @@ KEY = os.environ.get("SPORTMONKS_KEY")
 class Continents(BaseAPI):
     """Continents Class."""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def continents(self, continent_id: Optional[int] = None,
@@ -74,7 +74,7 @@ class Continents(BaseAPI):
 class Countries(BaseAPI):
     """Countries Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def countries(self, country_id: Optional[int] = None,
@@ -130,7 +130,7 @@ class Countries(BaseAPI):
 class Leagues(BaseAPI):
     """Leagues Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_id(self, league_id: Optional[int] = None,
@@ -222,7 +222,7 @@ class Leagues(BaseAPI):
 class Seasons(BaseAPI):
     """Seasons API"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
 
@@ -288,7 +288,7 @@ class Seasons(BaseAPI):
 class Bookmakers(BaseAPI):
     """Bookmakers Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
 
@@ -338,7 +338,7 @@ class Bookmakers(BaseAPI):
 class Markets(BaseAPI):
     """Markets Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def markets(self, market_id: Optional[int] = None,
@@ -387,7 +387,7 @@ class Markets(BaseAPI):
 class Teams(BaseAPI):
     """Teams Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_id(self, team_id: int, includes: Optional[Union[str, List[str]]] = None,
@@ -617,7 +617,7 @@ class Teams(BaseAPI):
 class Commentaries(BaseAPI):
     """Commentaries Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def commentaries(self, fixture_id: int, filters: Optional[dict] = None,
@@ -651,7 +651,7 @@ class Commentaries(BaseAPI):
 class Venues(BaseAPI):
     """Venues class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_id(self, venue_id: int, filters: Optional[dict] = None,
@@ -714,7 +714,7 @@ class Venues(BaseAPI):
 class Coaches(BaseAPI):
     """Coaches Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def coaches(self, coach_id: int, filters: Optional[dict] = None,
@@ -750,7 +750,7 @@ class Coaches(BaseAPI):
 class Rounds(BaseAPI):
     """Rounds Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_round(self, round_id: int, filters: Optional[dict] = None,
@@ -822,7 +822,7 @@ class Rounds(BaseAPI):
 class Stages(BaseAPI):
     """Stages Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_stage(self, stage_id: int, includes: Optional[Union[str, List[str]]] = None,
@@ -894,7 +894,7 @@ class Stages(BaseAPI):
 class Players(BaseAPI):
     """Players Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_id(self, player_id: int, includes: Optional[Union[str, List[str]]] = None,
@@ -966,39 +966,8 @@ class Players(BaseAPI):
 class Fixtures(BaseAPI):
     """Fixtures Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
-
-    @staticmethod
-    def __stats_includes(response: Union[dict, List[dict]]):
-        """Placeholder"""
-
-        if isinstance(response, list):
-            for fixt in response:
-                statistics = fixt.get("stats")
-                if len(statistics) == 2:
-                    fixt["home"] = statistics[0]
-                    fixt["away"] = statistics[1]
-                    del fixt["stats"]
-                else:
-                    log.info("Length of statistics: %s", len(statistics))
-                    fixt["home"] = {}
-                    fixt["away"] = {}
-                    del fixt["stats"]
-
-        elif isinstance(response, dict):
-            statistics = response.get("stats")
-            if len(statistics) == 2:
-                response["home"] = statistics[0]
-                response["away"] = statistics[1]
-                del response["stats"]
-            else:
-                log.info("Length of statistics: %s", len(statistics))
-                response["home"] = {}
-                response["away"] = {}
-                del response["stats"]
-
-        return response
 
     def by_id(self, fixture_ids: Union[int, List[int]],
               markets: Optional[Union[int, List[int]]] = None,
@@ -1235,8 +1204,58 @@ class Fixtures(BaseAPI):
         else:
             return fixtures
 
+class FixtureStats(Fixtures):
+    """Fixtures Statistics"""
 
-    def fixture_stats(self, fixture_ids: Union[int, List[int]],
+    @staticmethod
+    def __stats_includes(response: Union[dict, List[dict]]):
+        """Placeholder"""
+
+        if isinstance(response, list):
+            for fixt in response:
+                statistics = fixt.get("stats")
+                if len(statistics) == 2:
+                    fixt["home"] = statistics[0]
+                    fixt["away"] = statistics[1]
+                    del fixt["stats"]
+                else:
+                    log.info("Length of statistics: %s", len(statistics))
+                    fixt["home"] = {}
+                    fixt["away"] = {}
+                    del fixt["stats"]
+
+        elif isinstance(response, dict):
+            statistics = response.get("stats")
+            if len(statistics) == 2:
+                response["home"] = statistics[0]
+                response["away"] = statistics[1]
+                del response["stats"]
+            else:
+                log.info("Length of statistics: %s", len(statistics))
+                response["home"] = {}
+                response["away"] = {}
+                del response["stats"]
+
+        return response
+
+    def by_id(self, fixture_ids: Union[int, List[int]],
+              includes: Optional[Union[str, List[str]]] = "stats",
+              filters: Optional[dict] = None,
+              cols: Optional[Union[str, List[str]]] = None):
+        """
+        Fixture statistics to a pandas DataFrame.
+        ***Use stats includes.
+        Recommended includes are:
+        league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
+        """
+
+        response = super().by_id(fixture_ids=fixture_ids,
+                                 includes=includes, filters=filters)
+        response = self.__stats_includes(response)
+
+        return self._to_df(response, cols=cols)
+
+    def by_date_range(self, start_date: str, end_date: str,
                       includes: Optional[Union[str, List[str]]] = "stats",
                       filters: Optional[dict] = None,
                       cols: Optional[Union[str, List[str]]] = None):
@@ -1247,13 +1266,13 @@ class Fixtures(BaseAPI):
         league.country,localTeam,visitorTeam,localCoach,visitorCoach,venue,referee,stats
         """
 
-        response = self.by_id(fixture_ids=fixture_ids,
-                              includes=includes, filters=filters)
+        response = super().by_date_range(start_date=start_date, end_date=end_date,
+                                         includes=includes, filters=filters)
         response = self.__stats_includes(response)
 
         return self._to_df(response, cols=cols)
 
-    def player_stats(self, fixture_ids: Union[int, List[int]],
+    def player_by_id(self, fixture_ids: Union[int, List[int]],
                      includes: Optional[Union[str, List[str]]] = "lineup",
                      filters: Optional[dict] = None,
                      cols: Optional[Union[str, List[str]]] = None):
@@ -1261,8 +1280,32 @@ class Fixtures(BaseAPI):
         Player statistics from a fixture(s).
         """
 
-        response = self.by_id(fixture_ids=fixture_ids,
-                              includes=includes, filters=filters)
+        response = super().by_id(fixture_ids=fixture_ids,
+                                 includes=includes, filters=filters)
+        player_stats = []
+        if isinstance(response, list):
+            for fixt in response:
+                player_stats += [i for i in fixt.get("lineup")]
+        elif isinstance(response, dict):
+            player_stats = response["lineup"]
+        else:
+            raise TypeError(f"Did not expect response of type: {type(response)}")
+
+        return self._to_df(player_stats, cols=cols)
+
+    def player_by_date_range(self, start_date: str, end_date: str,
+                             league_ids: Optional[Union[int, List[int]]] = None,
+                             includes: Optional[Union[str, List[str]]] = "lineup",
+                             filters: Optional[dict] = None,
+                             cols: Optional[Union[str, List[str]]] = None):
+
+        """
+        Player statistics from a fixture(s).
+        """
+
+        response = super().by_date_range(start_date=start_date, end_date=end_date,
+                                         league_ids=league_ids,
+                                         includes=includes, filters=filters)
         player_stats = []
         if isinstance(response, list):
             for fixt in response:
@@ -1277,7 +1320,7 @@ class Fixtures(BaseAPI):
 class Schedule(BaseAPI):
     """Schedule (today) Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def schedule_today(self, markets: Optional[Union[int, List[int]]] = None,
@@ -1330,7 +1373,7 @@ class Schedule(BaseAPI):
 class Standings(BaseAPI):
     """Standings Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def by_season(self, season_id: int, includes: Optional[Union[str, List[str]]] = None,
@@ -1412,7 +1455,7 @@ class Standings(BaseAPI):
 class TopScorers(BaseAPI):
     """Topscorers Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def topscorers(self, season_id: int, stage_ids: Optional[Union[int, List[int]]] = None,
@@ -1497,7 +1540,7 @@ class TopScorers(BaseAPI):
 class Odds(BaseAPI):
     """Odds Class"""
 
-    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = 2):
+    def __init__(self, api_key: Optional[str] = None, timeout: Optional[int] = None):
         super().__init__(api_key, timeout)
 
     def odds(self, fixture_id: int, bookmaker_id: Optional[int] = None,
@@ -1655,4 +1698,4 @@ class Odds(BaseAPI):
             log.info("No odds given for that label.")
             return None
 
-        return label, round(market_label.mean(axis=1)[0], 2)
+        return round(market_label.mean(axis=1)[0], 2)

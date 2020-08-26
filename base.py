@@ -28,7 +28,7 @@ log = helper.setup_logger(__name__, "SM_API.log")
 class BaseAPI(object):
     """Base API for SportMonks"""
 
-    def __init__(self, api_key: str = None, timeout: int = 2,
+    def __init__(self, api_key: str = None, timeout: Optional[int] = None,
                  tz: Optional[str] = None):
 
         self.url = "https://soccer.sportmonks.com/api/v2.0/"
@@ -232,7 +232,8 @@ class BaseAPI(object):
         data = response.get("data")
         if not data:
             log.error("No data was included!")
-            return None
+            raise SystemExit("No data available. No fixtures in that time-frame.")
+
 
         if "pagination" in response.get("meta"):
             total_pages = response["meta"]["pagination"].get("total_pages")
