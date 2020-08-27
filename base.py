@@ -66,7 +66,9 @@ class BaseAPI(object):
         """Returns meta info from your SportMonks plan."""
 
         r = requests.get(self.create_api_url(endpoint="continents"),
-                         params=self.initial_params).json()
+                         params=self.initial_params)
+        r = r.json()
+        log.info("r: %s", r)
         plan = r.get("meta").get("plan")
 
         if plan:
@@ -174,7 +176,6 @@ class BaseAPI(object):
         """Make a GET reqeust to SportMonks API"""
 
 
-
         if params:
             params = self.process_params(params)
             params.update(self.initial_params)
@@ -194,6 +195,7 @@ class BaseAPI(object):
 
         log.info("Params: %s", params)
 
+
         url = self.create_api_url(endpoint=endpoint)
 
         try:
@@ -207,9 +209,13 @@ class BaseAPI(object):
 
         try:
             response = r.json()
+            log.info("r: %s", response)
+
         except ValueError as e:
             log.info("Could not decode response in to JSON: %s", e)
             raise SystemExit(e)
+
+        log.info("status code: %s", r.status_code)
 
         if "error" in response:
             error_message = response["error"].get("message")
@@ -235,7 +241,7 @@ class BaseAPI(object):
             raise SystemExit("No data available. No fixtures in that time-frame.")
 
 
-        if "pagination" in response.get("meta"):
+        if ("meta" in response) and ("pagination" in response.get("meta")):
             total_pages = response["meta"]["pagination"].get("total_pages")
             log.info("Response is paginated; %s pages", total_pages)
             for page in range(2, total_pages + 1):
