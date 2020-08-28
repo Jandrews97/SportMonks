@@ -462,16 +462,3 @@ def fixtures_data_to_sql(start_date: str, end_date: str, league_ids: int, table:
 
 
     return None
-
-if __name__ == "__main__":
-
-    fixtures_data_to_sql("2018-01-01", "2018-03-01", league_ids=8,
-                         table="why", if_exists="append", engine=ENGINE,
-                         markets=[1, 12, 976105, 976334,
-                                  976316, 136703818, 136830811],
-                         bookmakers=[2, 9, 15, 187, 27802, 271057011, 271057013],
-                         includes="league.country,localTeam,visitorTeam,\
-                                   localCoach,visitorCoach,\
-                                   venue,referee,stats,lineup,odds",
-                         cols=db_cols.FIXTURE_COLUMNS,
-                         cols_rename=db_cols.RENAME_FIXT_COLUMNS)
