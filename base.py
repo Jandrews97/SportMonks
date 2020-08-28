@@ -1,5 +1,5 @@
 """
-Implement OOP ideas in to my sportmonks module.
+Base API for SportMonks.
 API information: https://www.sportmonks.com/products/soccer
  """
 import os
@@ -30,6 +30,16 @@ class BaseAPI(object):
 
     def __init__(self, api_key: str = None, timeout: Optional[int] = None,
                  tz: Optional[str] = None):
+
+        """
+        Args:
+            api_key:
+                api_key for SportMonks subscription.
+            timeout:
+                number of seconds to wait before a response from API.
+            tz:
+                timezone
+        """
 
         self.url = "https://soccer.sportmonks.com/api/v2.0/"
         self.api_key = api_key
@@ -78,7 +88,7 @@ class BaseAPI(object):
                 limit, mins = plan.get("request_limit").split(",")
                 self.request_limit = f"{limit} requests per {mins} minutes."
         else:
-            log.info("Request error: %s", r.status_code)
+            log.info("Could not retrieve plan info: %s", r.status_code)
 
         return None
 
