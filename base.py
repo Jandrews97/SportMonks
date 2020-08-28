@@ -67,15 +67,18 @@ class BaseAPI(object):
 
         r = requests.get(self.create_api_url(endpoint="continents"),
                          params=self.initial_params)
-        r = r.json()
-        log.info("r: %s", r)
-        plan = r.get("meta").get("plan")
+        if r.status_code == 200:
+            r = r.json()
+            log.info("r: %s", r)
+            plan = r.get("meta").get("plan")
 
-        if plan:
-            self.plan_name = plan.get("name")
-            self.plan_price = "\u20ac" + plan.get("price")
-            limit, mins = plan.get("request_limit").split(",")
-            self.request_limit = f"{limit} requests per {mins} minutes."
+            if plan:
+                self.plan_name = plan.get("name")
+                self.plan_price = "\u20ac" + plan.get("price")
+                limit, mins = plan.get("request_limit").split(",")
+                self.request_limit = f"{limit} requests per {mins} minutes."
+        else:
+            log.info("Request error: %s", r.status_code)
 
         return None
 
