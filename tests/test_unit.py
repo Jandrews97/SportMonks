@@ -19,12 +19,18 @@ from errors import (
 
 class TestBase(unittest.TestCase):
 
+    """Testing Class"""
+
     def setUp(self):
+
+        """Executed before any test"""
 
         self.base = BaseAPI(api_key="foo")
 
     @patch("base.requests.get")
     def test_exceptions(self, mock_get):
+
+        """Test BaseAPI raises the correct exceptions"""
 
         error_status_codes = {
             BadRequest: 400,
@@ -53,6 +59,8 @@ class TestBase(unittest.TestCase):
     @patch("base.requests.get")
     def test_successful_call(self, mock_get):
 
+        """Test a successful request"""
+
         mock_response = Mock()
         expected_response = {"data": {"foo":"bar"}}
         mock_response.json.return_value = expected_response
@@ -66,6 +74,8 @@ class TestBase(unittest.TestCase):
 
     @patch("base.requests.get")
     def test_args(self, mock_get):
+
+        """Test the arguments passed to requests.get()"""
 
         self.base.timeout = 10
 

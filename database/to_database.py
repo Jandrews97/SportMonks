@@ -458,7 +458,7 @@ def fixtures_data_to_sql(start_date: str, end_date: str, league_ids: int, table:
 
     if "odds" in includes:
         odds_includes(fixtures, markets=markets, table=table,
-                    if_exists=if_exists, engine=engine)
+                      if_exists=if_exists, engine=engine)
 
 
     return None
