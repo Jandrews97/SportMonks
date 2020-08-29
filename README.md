@@ -72,5 +72,11 @@ fixt_stats.player_by_id(fixture_ids: Union[int, List[int]],
 # one row for each player, so, per fixture, 22 rows
 
 ```    
+# Database
+
+The file ```run.py``` is run every night to populate new data in to a SQL database
+from the fixtures that day. 
+This includes all statistics from the fixtures, all player statistics from the fixtures 
+and also odds from certain markets.
 
     
