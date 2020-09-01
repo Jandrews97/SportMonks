@@ -15,22 +15,22 @@ if __name__ == "__main__":
 
     with ENGINE.begin() as con:
 
-        to_psql(Continents().continents(), table="Continents1", engine=con,
+        to_psql(Continents().continents(), table="Continents", engine=con,
                 if_exists="replace", cols=["id", "name"])
 
-        to_psql(Countries().countries(), table="Countries1", engine=con,
+        to_psql(Countries().countries(), table="Countries", engine=con,
                 if_exists="replace", cols=["id", "name"])
 
-        to_psql(Bookmakers().bookmakers(), table="Bookmakers1", engine=con,
+        to_psql(Bookmakers().bookmakers(), table="Bookmakers", engine=con,
                 if_exists="replace", cols=["id", "name"])
 
-        to_psql(Markets().markets(), table="Markets1", engine=con,
+        to_psql(Markets().markets(), table="Markets", engine=con,
                 if_exists="replace", cols=["id", "name"])
 
-        to_psql(Leagues().by_id(), table="Leagues1", engine=con,
+        to_psql(Leagues().by_id(), table="Leagues", engine=con,
                 if_exists="replace", cols=["id", "name"])
 
-        to_psql(Seasons().seasons(), table="Seasons1", engine=con,
+        to_psql(Seasons().seasons(), table="Seasons", engine=con,
                 if_exists="replace", cols=["id", "name", "league_id"])
 
 

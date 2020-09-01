@@ -436,7 +436,7 @@ def fixtures_data_to_sql(start_date: str, end_date: str, league_ids: int, table:
         #con.execute(f"ALTER TABLE public.\"{table}\" ALTER COLUMN datetime TYPE \
                     #timestamp with time zone using \
                     #to_timestamp(datetime, 'YYYY-MM-DD HH24:MI:SS');")
-        con.execute(f"ALTER TABLE public.\"{table}\" ADD COLUMN season text")
+        #con.execute(f"ALTER TABLE public.\"{table}\" ADD COLUMN season text")
         con.execute(f"UPDATE public.\"{table}\"  \
                      SET season = public.\"Seasons\".name \
                      FROM public.\"Seasons\" \
