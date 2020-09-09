@@ -36,7 +36,7 @@ odds.average_odds(fixture_id, market_id, label, filters=None)
 from football import Fixtures, FixtureStats
 
 # the Fixtures class allows us to retrieve historical fixtures
-# from 2006/2006 onwards by id, date or date range
+# from 2005/2006 onwards by id, date or date range
 
 fixts = Fixtures(api_key)
 def by_date_range(start_date: str, end_date: str,
